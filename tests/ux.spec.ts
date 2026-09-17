@@ -2,7 +2,14 @@ import { test, expect, type Page } from "@playwright/test";
 
 async function english(page: Page, path = "/simulator") {
   await page.goto(path);
-  await page.getByRole("button", { name: "Switch to English" }).click();
+  const toggle = page.locator(".menu-button");
+  if (await toggle.isVisible()) {
+    await toggle.click();
+    await page.getByRole("button", { name: "Switch to English" }).click();
+    await toggle.click();
+  } else {
+    await page.getByRole("button", { name: "Switch to English" }).click();
+  }
   await expect(page.locator("html")).toHaveAttribute("lang", "en");
 }
 
@@ -148,7 +155,16 @@ test("all routes render in AR/EN at desktop and mobile without page overflow", a
     for (const lang of ["ar", "en"]) {
       for (const route of ["/", "/dashboard", "/simulator", "/assistant", "/evaluation", "/project", "/hardware"]) {
         await page.goto(route);
-        if (lang === "en") await page.getByRole("button", { name: "Switch to English" }).click();
+        if (lang === "en") {
+          const menuToggle = page.locator(".menu-button");
+          if (await menuToggle.isVisible()) {
+            await menuToggle.click();
+            await page.getByRole("button", { name: "Switch to English" }).click();
+            await page.keyboard.press("Escape");
+          } else {
+            await page.getByRole("button", { name: "Switch to English" }).click();
+          }
+        }
         await expect(page.locator("h1")).toBeVisible();
         expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
         if (route === "/hardware") await expect(page.locator("main")).toContainText("Raspberry Pi");
@@ -162,6 +178,8 @@ test("all routes render in AR/EN at desktop and mobile without page overflow", a
 
 test("home is a gateway; overview reads shared state and links to simulator edits", async ({ page }) => {
   await english(page, "/");
+  await expect(page.getByRole("navigation").getByRole("link", { name: "Home", exact: true })).toBeVisible();
+  await expect(page.locator(".feature-grid .feature-card")).toHaveCount(3);
   await expect(page.getByRole("slider")).toHaveCount(0);
   await expect(page.locator(".recommendation")).toHaveCount(0);
   await page.getByRole("link", { name: "View overview" }).click();

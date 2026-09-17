@@ -252,6 +252,7 @@ rounded:
   motion-control: "5px"
   navigation-and-chat: "6px"
   control: "8px"
+  feature-card: "14px"
   scene-and-studio-phone: "12px"
   concept-pill: "99px"
   hardware-node: "12px"

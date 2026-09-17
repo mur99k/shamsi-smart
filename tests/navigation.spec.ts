@@ -9,7 +9,16 @@ for (const width of [390, 768, 1024, 1440]) {
       await page.setViewportSize({ width, height: 900 });
       for (const from of routes) {
         await page.goto(from);
-        if (lang === "en") await page.getByRole("button", { name: "Switch to English" }).click();
+        if (lang === "en") {
+          const menuToggle = page.locator(".menu-button");
+          if (await menuToggle.isVisible()) {
+            await menuToggle.click();
+            await page.getByRole("button", { name: "Switch to English" }).click();
+            await page.keyboard.press("Escape");
+          } else {
+            await page.getByRole("button", { name: "Switch to English" }).click();
+          }
+        }
         for (const to of routes) {
           if (width <= 850 && to !== "/") await page.locator(".menu-button").click();
           await page.locator(to === "/" ? ".brand" : `#primary-nav a[href="${to}"]`).click();
