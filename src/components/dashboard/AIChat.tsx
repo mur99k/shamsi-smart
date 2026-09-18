@@ -1,24 +1,34 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { Send, Trash2, LoaderCircle } from "lucide-react";
+import { Send, Trash2, LoaderCircle, Sparkles, Square } from "lucide-react";
+import { ACTION_META } from "@/types/energy";
 import { useSolar } from "./SolarProvider";
 
 export default function AIChat() {
   const { lang, messages, draft, setDraft, chatLoading, send, clearChat } = useSolar();
   const box = useRef<HTMLDivElement>(null);
+  const field = useRef<HTMLTextAreaElement>(null);
   const ar = lang === "ar";
   useEffect(() => { box.current?.scrollTo({ top: box.current.scrollHeight }); }, [messages, chatLoading]);
+  useEffect(() => {
+    const el = field.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight, 220)}px`;
+  }, [draft]);
   const questions = ar ? ["هل عندي فائض الآن؟", "لماذا هذا القرار؟", "ماذا لو امتلأت البطارية؟"] : ["Do I have surplus now?", "Why this decision?", "What if the battery fills up?"];
   return <section className="chat-workspace" aria-label={ar ? "المحادثة" : "Conversation"}>
     <div className="section-heading"><h2>{ar ? "المحادثة" : "Conversation"}</h2><button className="icon-button" onClick={clearChat} disabled={chatLoading || !messages.length} aria-label={ar ? "مسح المحادثة" : "Clear conversation"} title={ar ? "مسح المحادثة" : "Clear conversation"}><Trash2 size={18} /></button></div>
     <div ref={box} className="chat-history" role="log" aria-live="polite" aria-relevant="additions" aria-busy={chatLoading}>
       {!messages.length && <div className="chat-empty"><h3>{ar ? "ما سؤالك عن حالة الطاقة؟" : "What would you like to know?"}</h3><p>{ar ? "الإنتاج والاستهلاك وحالة البطارية جاهزة للنقاش." : "Solar output, consumption and battery state are ready to discuss."}</p></div>}
-      {messages.map((message, index) => <article key={index} className={`message ${message.role}`}><div className="message-meta"><strong>{message.role === "user" ? (ar ? "أنت" : "You") : message.error ? (ar ? "خطأ اتصال" : "Request error") : message.source === "ai" ? (ar ? "المساعد · AI" : "Assistant · AI") : (ar ? "المساعد · محلي" : "Assistant · Local")}</strong><span dir="ltr" title={ar ? "الإنتاج / الاستهلاك / البطارية" : "Production / consumption / battery"}>{message.snapshot}</span></div><p dir="auto" className={message.error ? "error-text" : ""}>{message.content}</p></article>)}
-      {chatLoading && <div className="chat-loading" role="status"><LoaderCircle className="spin" size={18} />{ar ? "جارٍ إعداد الرد على الحالة المرسلة..." : "Preparing a reply for the submitted state..."}</div>}
+      {messages.map((message, index) => <article key={index} className={`message ${message.role}`}><div className="message-meta"><strong>{message.role === "user" ? (ar ? "أنت" : "You") : message.error ? (ar ? "خطأ اتصال" : "Request error") : message.source === "ai" ? (ar ? "المساعد · AI" : "Assistant · AI") : (ar ? "المساعد · محلي" : "Assistant · Local")}</strong><span dir="ltr" title={ar ? "الإنتاج / الاستهلاك / البطارية" : "Production / consumption / battery"}>{message.snapshot}</span></div><div className="bubble">{message.role === "assistant" && !message.error && <Sparkles size={15} className="bubble-icon" aria-hidden="true" />}<p dir="auto" className={message.error ? "error-text" : ""}>{message.content}</p></div>{message.role === "assistant" && !message.error && message.decision && <div className="bubble-badges"><span className="badge">{ar ? ACTION_META[message.decision].labelAr : ACTION_META[message.decision].labelEn}</span>{message.source !== "ai" && <span className="badge">{ar ? "محرك محلي" : "Local engine"}</span>}</div>}</article>)}
+      {chatLoading && <div className="chat-loading" role="status"><LoaderCircle className="spin" size={18} /><span className="typing" aria-hidden="true"><span /><span /><span /></span>{ar ? "جارٍ إعداد الرد على الحالة المرسلة..." : "Preparing a reply for the submitted state..."}</div>}
     </div>
+    <div className="chat-dock">
     <div className="quick-questions">{questions.map(question => <button key={question} disabled={chatLoading} onClick={() => send(question)}>{question}</button>)}</div>
-    <form className="chat-compose" onSubmit={event => { event.preventDefault(); void send(draft); }}><textarea aria-label={ar ? "سؤالك" : "Your question"} placeholder={ar ? "اسأل عن حالة الطاقة..." : "Ask about the energy state..."} maxLength={1000} rows={3} value={draft} onChange={event => setDraft(event.target.value)} /><button className="icon-button primary" type="submit" disabled={chatLoading || !draft.trim()} title={ar ? "إرسال" : "Send"} aria-label={ar ? "إرسال" : "Send"}><Send size={20} /></button></form>
+    <form className="chat-compose" onSubmit={event => { event.preventDefault(); void send(draft); }}><textarea ref={field} aria-label={ar ? "سؤالك" : "Your question"} placeholder={ar ? "اسأل عن حالة الطاقة..." : "Ask about the energy state..."} maxLength={1000} rows={1} value={draft} onChange={event => setDraft(event.target.value)} onKeyDown={event => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); void send(draft); } }} /><button className="icon-button primary send-button" type="submit" disabled={chatLoading || !draft.trim()} title={ar ? "إرسال" : "Send"} aria-label={ar ? "إرسال" : "Send"}>{chatLoading ? <Square size={16} /> : <Send size={20} />}</button></form>
+    </div>
     <p className="small muted">{ar ? "الإجابات تخص الحالة المرفقة بكل رسالة. المحادثة محفوظة أثناء التنقل فقط." : "Replies refer to each message's attached state. Conversation is retained during navigation only."}</p>
   </section>;
 }
