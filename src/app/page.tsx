@@ -1,35 +1,71 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, ArrowUpRight, Activity, Battery, Cpu, Sun, Cable, Gauge } from "lucide-react";
+import { Activity, Gauge, PlugZap, Sun, Cpu, BatteryCharging, ArrowLeft, ArrowRight, ArrowDown, Zap } from "lucide-react";
+import { ACTION_META } from "@/types/energy";
 import { useSolar } from "@/components/dashboard/SolarProvider";
 
 export default function Home() {
-  const { lang } = useSolar();
+  const { lang, sim, calc, decision } = useSolar();
   const ar = lang === "ar";
+  const Forward = ar ? ArrowLeft : ArrowRight;
+  const action = ACTION_META[decision.recommendedAction];
+
+  const features = [
+    { icon: Activity, cls: "feat-live", titleAr: "تحليل لحظي", titleEn: "Live analysis", descAr: "الحالة والقرار يتحدثان فور تغيير الإنتاج أو الاستهلاك.", descEn: "State and decision update the moment production or demand changes." },
+    { icon: Gauge, cls: "feat-decision", titleAr: "قرار تلقائي مفسَّر", titleEn: "Explained decisions", descAr: "إجراء واحد مقترح مع سبب واضح، ومساعد يجيب عن أسئلتك.", descEn: "One suggested action with a clear reason, plus an assistant for questions." },
+    { icon: PlugZap, cls: "feat-hardware", titleAr: "ربط مباشر مع أجهزة ESP32 والمستشعرات 🔌", titleEn: "Direct link with ESP32 devices & sensors 🔌", descAr: "نفس الحالة يمكن أن تأتي من حساسات حقيقية عبر USB لاحقًا.", descEn: "The same state can later come from real sensors over USB." },
+  ];
+  const steps = [
+    { icon: Sun, num: "01", titleAr: "اقرأ", titleEn: "Read", descAr: "إنتاج الشمس واستهلاك المنزل لحظة بلحظة.", descEn: "Solar production and home demand, moment by moment." },
+    { icon: Cpu, num: "02", titleAr: "حلّل", titleEn: "Analyze", descAr: "صافي الطاقة: فائض، توازن، أو عجز.", descEn: "Net state: surplus, balance, or shortage." },
+    { icon: BatteryCharging, num: "03", titleAr: "وجّه", titleEn: "Route", descAr: "بطارية أو سيارة أو حمل إضافي.", descEn: "Battery, EV, or an additional load." },
+  ];
+
   return <div className="landing-page">
     <section className="landing-hero-clean">
       <div className="landing-hero-copy">
-        <Image src="/logo-solarwise.png" alt="SolarWise — Intelligent Solar Energy Management" width={300} height={294} className="hero-logo" priority />
-        <span className="eyebrow">{ar ? "إدارة الطاقة الشمسية بذكاء" : "SMART SOLAR ENERGY MANAGEMENT"}</span>
-        <h1>{ar ? "استفد من كل واط." : "Make every watt count."}</h1>
-        <p>{ar ? "نظام يساعدك على فهم فائض الطاقة الشمسية وتوجيهه إلى الوجهة الأنسب — من خلال المحاكاة وقرار ذكي قابل للشرح." : "A decision system that helps you understand solar surplus and route it to the most suitable destination through simulation and explainable intelligence."}</p>
-        <div className="landing-ctas"><Link className="button primary" href="/simulator">{ar ? "تجربة المحاكي" : "Try the simulator"}<ArrowUpRight size={17} /></Link><Link className="button" href="/dashboard">{ar ? "عرض لوحة التحكم" : "View overview"}<ArrowRight size={17} /></Link></div>
+        <span className="eyebrow">SOLARWISE · {ar ? "إدارة الطاقة الشمسية بذكاء" : "SMART SOLAR ENERGY MANAGEMENT"}</span>
+        <h1>{ar ? "SolarWise — إدارة متكاملة لفائض الطاقة بالذكاء الاصطناعي" : "SolarWise — AI-powered solar surplus management"}</h1>
+        <p>{ar ? "منصة ذكية تحلل قراءات الطاقة الشمسية لحظيًا، وتتخذ القرارات الآلية لتوجيه الفائض وإدارته بدقة." : "A smart platform that analyzes solar readings in real time and automates decisions to route and manage surplus precisely."}</p>
+        <div className="landing-ctas">
+          <Link className="button primary glow" href="/simulator">🚀 {ar ? "ابدأ المحاكاة التفاعلية" : "Start the interactive simulator"}</Link>
+          <Link className="button bordered" href="/hardware">🔌 {ar ? "استكشف الأجهزة والمكونات" : "Explore devices & components"}</Link>
+        </div>
         <span className="landing-note">{ar ? "نموذج برمجي للمحاكاة — لا توجد أجهزة متصلة حاليًا." : "Software simulation prototype — no hardware connected."}</span>
       </div>
-      <div className="landing-hero-media"><Image src="/solar-panels.jpg" alt={ar ? "ألواح شمسية في ضوء النهار" : "Solar panels in daylight"} fill priority sizes="(max-width: 700px) 100vw, 48vw" /></div>
+      <div className="landing-hero-visual">
+        <div className="live-snapshot">
+          <span className="live-pulse" aria-hidden="true"><Zap size={13} /></span>
+          <h2>{ar ? "حالة النظام الآن" : "Live system state"}</h2>
+          <dl>
+            <div><dt>{ar ? "الإنتاج" : "Solar"}</dt><dd dir="ltr" className="num">{calc.solarProductionW} W</dd></div>
+            <div><dt>{ar ? "الاستهلاك" : "Load"}</dt><dd dir="ltr" className="num">{calc.consumptionW} W</dd></div>
+            <div><dt>{ar ? "البطارية" : "Battery"}</dt><dd dir="ltr" className="num">{sim.batteryLevelPct}%</dd></div>
+          </dl>
+          <p className="live-decision">{ar ? action.labelAr : action.labelEn}</p>
+          <Link className="button primary" href="/simulator">{ar ? "افتح المحاكي" : "Open simulator"}</Link>
+        </div>
+      </div>
     </section>
 
     <section className="landing-features" aria-label={ar ? "مميزات النظام الذكي" : "Smart system features"}>
       <div className="landing-section-intro"><span className="eyebrow">{ar ? "مميزات النظام الذكي" : "SMART SYSTEM FEATURES"}</span><h2>{ar ? "لماذا SolarWise؟" : "Why SolarWise?"}</h2></div>
-      <div className="feature-grid">
-        <div className="feature-card"><span className="feature-icon"><Activity size={20} aria-hidden="true" /></span><h3>{ar ? "تحليل لحظي" : "Live analysis"}</h3><p>{ar ? "الحالة والقرار يتحدثان فور تغيير الإنتاج أو الاستهلاك." : "State and decision update the moment production or demand changes."}</p></div>
-        <div className="feature-card"><span className="feature-icon"><Gauge size={20} aria-hidden="true" /></span><h3>{ar ? "قرار تلقائي مفسَّر" : "Explained decisions"}</h3><p>{ar ? "إجراء واحد مقترح مع سبب واضح، ومساعد يجيب عن أسئلتك." : "One suggested action with a clear reason, plus an assistant for questions."}</p></div>
-        <div className="feature-card"><span className="feature-icon"><Cable size={20} aria-hidden="true" /></span><h3>{ar ? "جاهز لعتاد ESP32" : "ESP32-ready"}</h3><p>{ar ? "نفس الحالة يمكن أن تأتي من حساسات حقيقية عبر USB لاحقًا." : "The same state can later come from real sensors over USB."}</p></div>
+      <div className="feature-grid landing-feats">
+        {features.map(f => <div key={f.titleEn} className={`feature-card ${f.cls}`}><span className="feature-icon"><f.icon size={22} aria-hidden="true" /></span><h3>{ar ? f.titleAr : f.titleEn}</h3><p>{ar ? f.descAr : f.descEn}</p></div>)}
       </div>
     </section>
 
-    <section className="landing-how"><div className="landing-section-intro"><span className="eyebrow">{ar ? "الفكرة ببساطة" : "THE IDEA, SIMPLIFIED"}</span><h2>{ar ? "من القراءة إلى القرار." : "From reading to decision."}</h2><p>{ar ? "الإنتاج والاستهلاك يتغيران. النظام يحسب الحالة الحالية ثم يقترح ما يمكن فعله بالفائض." : "Production and demand change. The system calculates the current state, then recommends what can happen to the surplus."}</p></div><div className="landing-steps"><div><span>01</span><Sun size={22} /><h3>{ar ? "اقرأ" : "Read"}</h3><p>{ar ? "إنتاج الشمس واستهلاك المنزل." : "Solar production and home demand."}</p></div><div><span>02</span><Cpu size={22} /><h3>{ar ? "حلل" : "Analyze"}</h3><p>{ar ? "صافي الطاقة: فائض، توازن، أو عجز." : "Net state: surplus, balance, or shortage."}</p></div><div><span>03</span><Battery size={22} /><h3>{ar ? "وجّه" : "Route"}</h3><p>{ar ? "بطارية أو سيارة أو حمل إضافي." : "Battery, EV, or an additional load."}</p></div></div></section>
+    <section className="landing-how"><div className="landing-section-intro"><span className="eyebrow">{ar ? "الفكرة ببساطة" : "THE IDEA, SIMPLIFIED"}</span><h2>{ar ? "من القراءة إلى القرار." : "From reading to decision."}</h2><p>{ar ? "الإنتاج والاستهلاك يتغيران. النظام يحسب الحالة الحالية ثم يقترح ما يمكن فعله بالفائض." : "Production and demand change. The system calculates the current state, then recommends what can happen to the surplus."}</p></div>
+      <div className="landing-steps big">
+        {steps.map((s, i) => <div key={s.num} className="big-step">
+          <span className="big-num" dir="ltr">{s.num}</span>
+          <span className="big-icon"><s.icon size={26} /></span>
+          <h3>{ar ? s.titleAr : s.titleEn}</h3><p>{ar ? s.descAr : s.descEn}</p>
+          {i < steps.length - 1 && <span className="big-link-h" aria-hidden="true"><Forward size={24} /></span>}
+          {i < steps.length - 1 && <span className="big-link-v" aria-hidden="true"><ArrowDown size={24} /></span>}
+        </div>)}
+      </div>
+    </section>
   </div>;
 }
