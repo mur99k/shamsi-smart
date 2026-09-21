@@ -21,7 +21,7 @@ export default function Home() {
     </section>
 
     <section className="landing-features" aria-label={ar ? "مميزات النظام الذكي" : "Smart system features"}>
-      <div className="landing-section-intro"><span className="eyebrow">{ar ? "مميزات النظام الذكي" : "SMART SYSTEM FEATURES"}</span><h2>{ar ? "لماذا شمسي الذكي؟" : "Why Solar AI?"}</h2></div>
+      <div className="landing-section-intro"><span className="eyebrow">{ar ? "مميزات النظام الذكي" : "SMART SYSTEM FEATURES"}</span><h2>{ar ? "لماذا SolarWise؟" : "Why SolarWise?"}</h2></div>
       <div className="feature-grid">
         <div className="feature-card"><span className="feature-icon"><Activity size={20} aria-hidden="true" /></span><h3>{ar ? "تحليل لحظي" : "Live analysis"}</h3><p>{ar ? "الحالة والقرار يتحدثان فور تغيير الإنتاج أو الاستهلاك." : "State and decision update the moment production or demand changes."}</p></div>
         <div className="feature-card"><span className="feature-icon"><Gauge size={20} aria-hidden="true" /></span><h3>{ar ? "قرار تلقائي مفسَّر" : "Explained decisions"}</h3><p>{ar ? "إجراء واحد مقترح مع سبب واضح، ومساعد يجيب عن أسئلتك." : "One suggested action with a clear reason, plus an assistant for questions."}</p></div>

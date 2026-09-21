@@ -4,7 +4,7 @@ import { SolarProvider } from "@/components/dashboard/SolarProvider";
 import AppShell from "@/components/dashboard/AppShell";
 
 export const metadata: Metadata = {
-  title: "شمسي الذكي — Solar AI Decision Prototype",
+  title: "SolarWise — Intelligent Solar Energy Management",
   description:
     "AI-powered recommendation prototype for managing solar surplus energy. Simulation only.",
   icons: { icon: "/logo-solarwise.png" },
