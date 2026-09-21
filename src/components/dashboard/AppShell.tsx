@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useRef, useState } from "react";
-import { Menu, X, Sun, Cable, House, LayoutDashboard, SlidersHorizontal, MessagesSquare, ClipboardCheck, FileText, Cpu, Globe } from "lucide-react";
+import { Menu, X, Cable, House, LayoutDashboard, SlidersHorizontal, MessagesSquare, ClipboardCheck, FileText, Cpu, Globe } from "lucide-react";
 import { useSolar } from "./SolarProvider";
 
 const routes = [
@@ -27,10 +28,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     <a className="skip-link" href="#main">{ar ? "انتقل إلى المحتوى" : "Skip to content"}</a>
     <header className="site-header" onKeyDown={event => { if (event.key === "Escape") close(); }}>
       <div className="header-inner">
-        <Link href="/" className="brand" onClick={() => setOpen(false)}><Sun size={23} aria-hidden="true" /><span>{ar ? "شمسي الذكي" : "Solar AI"}</span></Link>
+        <Link href="/" className="brand" onClick={() => setOpen(false)}><Image src="/logo-solarwise.png" alt="SolarWise" width={38} height={38} className="brand-logo" priority /><span>{ar ? "شمسي الذكي" : "Solar AI"}</span></Link>
         <nav id="primary-nav" aria-label={ar ? "التنقل الرئيسي" : "Main navigation"} className={`navigation ${open ? "is-open" : ""}`}>
           <div className="drawer-head">
-            <span className="drawer-brand"><Sun size={20} aria-hidden="true" />{ar ? "شمسي الذكي" : "Solar AI"}</span>
+            <span className="drawer-brand"><Image src="/logo-solarwise.png" alt="SolarWise" width={32} height={32} className="brand-logo" />{ar ? "شمسي الذكي" : "Solar AI"}</span>
           </div>
           {routes.map(([href, en, arabic, Icon]) => <Link key={href} href={href} aria-current={pathname === href ? "page" : undefined} onClick={() => setOpen(false)}><Icon size={17} aria-hidden="true" />{ar ? arabic : en}</Link>)}
           <div className="drawer-footer">

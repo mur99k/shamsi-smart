@@ -7,6 +7,7 @@ export const metadata: Metadata = {
   title: "شمسي الذكي — Solar AI Decision Prototype",
   description:
     "AI-powered recommendation prototype for managing solar surplus energy. Simulation only.",
+  icons: { icon: "/logo-solarwise.png" },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

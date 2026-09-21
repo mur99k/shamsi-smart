@@ -1,6 +1,8 @@
 @import "tailwindcss";
 
 .gateway-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 24px; }
+.brand, .drawer-brand { display: inline-flex; align-items: center; gap: 10px; }
+.brand-logo { border-radius: 10px; }
 .gateway-concept { margin: 0; padding: 36px; background: var(--surface); border-radius: 18px; }
 .concept-path { display: flex; align-items: center; justify-content: center; max-width: 720px; margin: 0 auto 28px; color: var(--accent); }
 .concept-path span { position: relative; flex: 1; border-top: 2px dashed #aac8b6; margin-inline: 20px; }
