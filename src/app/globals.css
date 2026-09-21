@@ -263,6 +263,16 @@ legend { padding: 0 6px; font-size: 14px; }
 .history-log h3 { font-size: 14px; margin-bottom: 8px; }
 .history-log ul { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
 .history-log li { border: 1px solid var(--border); border-radius: 8px; background: #fff; padding: 6px 12px; font-size: 12px; }
+.eval-cards-title { font-size: 15px; margin: 24px 0 12px; }
+.scenario-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+.scenario-card { display: grid; gap: 6px; justify-items: start; text-align: start; padding: 14px; border: 1px solid var(--border); border-radius: 12px; background: #fff; cursor: pointer; color: var(--ink); font-size: 13px; }
+.scenario-card.selected { border-color: #17634d; box-shadow: 0 0 0 2px rgba(23, 99, 77, 0.2); }
+.scenario-card strong { font-size: 14px; }
+.scenario-card small { color: var(--muted); font-size: 12px; line-height: 1.7; }
+.scenario-num { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 99px; background: #e4f0e8; color: #17634d; font-size: 12px; font-weight: 700; }
+.scenario-verdict { display: inline-flex; align-items: center; gap: 6px; border-radius: 8px; padding: 4px 10px; font-size: 12px; font-weight: 600; }
+.scenario-verdict.ok { background: #e2f2e7; color: #205c3e; }
+.scenario-verdict.no { background: #fdf0e3; color: #8a5a16; }
 @media (max-width: 850px) { .hero-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); } .eval-extra { grid-template-columns: 1fr; } }
 .table-scroll { max-width: 100%; overflow-x: auto; margin-block: 24px; scrollbar-color: #aebcb4 #f4f7f5; }
 table { border-collapse: collapse; width: 100%; font-size: 12px; }
