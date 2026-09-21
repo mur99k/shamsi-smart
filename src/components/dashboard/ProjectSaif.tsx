@@ -43,7 +43,7 @@ export default function ProjectSaif({ lang }: { lang: Lang }) {
     </section>
 
     <section className="hw-timeline-panel">
-      <div className="hw-timeline-head"><h2>{ar ? "خارطة الربط مع العتاد" : "Hardware roadmap"}</h2><Link href="/hardware" className="button">{ar ? "خطة العتاد" : "Hardware plan"}</Link></div>
+      <div className="hw-timeline-head"><h2>{ar ? "مراحل التكامل مع الأجهزة الحقيقية" : "Real-hardware integration stages"}</h2><Link href="/hardware" className="button">{ar ? "خطة العتاد" : "Hardware plan"}</Link></div>
       <ol className="hw-timeline">
         {steps.map(s => <li key={s.titleEn} className={s.done ? "hw-step done" : "hw-step"}>
           <span className="hw-dot"><s.icon size={18} /></span>
