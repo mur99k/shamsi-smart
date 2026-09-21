@@ -360,7 +360,7 @@ tbody th { min-width: 180px; font-weight: 500; }
   .navigation a svg { display: block; color: var(--accent); flex-shrink: 0; }
   .navigation a:hover { background: rgba(23, 99, 77, 0.07); }
   .navigation a[aria-current] { background: #e4f0e8; border-color: #17634d; box-shadow: 0 6px 18px rgba(23, 99, 77, 0.14); }
-  .drawer-head { display: flex; align-items: center; justify-content: space-between; padding: 2px 4px 14px; margin-bottom: 8px; border-bottom: 1px solid var(--border); }
+  .drawer-head { display: flex; align-items: center; justify-content: center; padding: 2px 4px 14px; margin-bottom: 8px; border-bottom: 1px solid var(--border); }
   .drawer-brand { display: inline-flex; align-items: center; gap: 8px; font-weight: 700; font-size: 17px; }
   .drawer-brand svg { color: #ad781d; }
   .drawer-footer { display: grid; gap: 10px; margin-top: auto; padding-top: 16px; border-top: 1px solid var(--border); position: sticky; bottom: 0; background: rgba(251, 253, 251, 0.98); padding-bottom: 6px; }
