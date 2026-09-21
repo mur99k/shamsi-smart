@@ -11,6 +11,7 @@ export default function Home() {
   return <div className="landing-page">
     <section className="landing-hero-clean">
       <div className="landing-hero-copy">
+        <Image src="/logo-solarwise.png" alt="SolarWise — Intelligent Solar Energy Management" width={300} height={294} className="hero-logo" priority />
         <span className="eyebrow">{ar ? "إدارة الطاقة الشمسية بذكاء" : "SMART SOLAR ENERGY MANAGEMENT"}</span>
         <h1>{ar ? "استفد من كل واط." : "Make every watt count."}</h1>
         <p>{ar ? "نظام يساعدك على فهم فائض الطاقة الشمسية وتوجيهه إلى الوجهة الأنسب — من خلال المحاكاة وقرار ذكي قابل للشرح." : "A decision system that helps you understand solar surplus and route it to the most suitable destination through simulation and explainable intelligence."}</p>

@@ -28,10 +28,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     <a className="skip-link" href="#main">{ar ? "انتقل إلى المحتوى" : "Skip to content"}</a>
     <header className="site-header" onKeyDown={event => { if (event.key === "Escape") close(); }}>
       <div className="header-inner">
-        <Link href="/" className="brand" onClick={() => setOpen(false)}><Image src="/logo-solarwise.png" alt="SolarWise" width={38} height={38} className="brand-logo" priority /><span>SolarWise</span></Link>
+        <Link href="/" className="brand" onClick={() => setOpen(false)}><Image src="/logo-icon.png" alt="SolarWise" width={70} height={44} className="brand-logo" priority /><span>SolarWise</span></Link>
         <nav id="primary-nav" aria-label={ar ? "التنقل الرئيسي" : "Main navigation"} className={`navigation ${open ? "is-open" : ""}`}>
           <div className="drawer-head">
-            <span className="drawer-brand"><Image src="/logo-solarwise.png" alt="SolarWise" width={32} height={32} className="brand-logo" />SolarWise</span>
+            <span className="drawer-brand"><Image src="/logo-icon.png" alt="SolarWise" width={60} height={38} className="brand-logo" />SolarWise</span>
           </div>
           {routes.map(([href, en, arabic, Icon]) => <Link key={href} href={href} aria-current={pathname === href ? "page" : undefined} onClick={() => setOpen(false)}><Icon size={17} aria-hidden="true" />{ar ? arabic : en}</Link>)}
           <div className="drawer-footer">
