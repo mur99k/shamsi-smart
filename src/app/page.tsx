@@ -1,5 +1,6 @@
 "use client";
 
+import { Fragment } from "react";
 import Link from "next/link";
 import { Activity, Gauge, PlugZap, Sun, Cpu, BatteryCharging, ArrowLeft, ArrowRight, ArrowDown, Zap } from "lucide-react";
 import { ACTION_META } from "@/types/energy";
@@ -58,13 +59,15 @@ export default function Home() {
 
     <section className="landing-how"><div className="landing-section-intro"><span className="eyebrow">{ar ? "الفكرة ببساطة" : "THE IDEA, SIMPLIFIED"}</span><h2>{ar ? "من القراءة إلى القرار." : "From reading to decision."}</h2><p>{ar ? "الإنتاج والاستهلاك يتغيران. النظام يحسب الحالة الحالية ثم يقترح ما يمكن فعله بالفائض." : "Production and demand change. The system calculates the current state, then recommends what can happen to the surplus."}</p></div>
       <div className="landing-steps big">
-        {steps.map((s, i) => <div key={s.num} className="big-step">
-          <span className="big-num" dir="ltr">{s.num}</span>
-          <span className="big-icon"><s.icon size={26} /></span>
-          <h3>{ar ? s.titleAr : s.titleEn}</h3><p>{ar ? s.descAr : s.descEn}</p>
-          {i < steps.length - 1 && <span className="big-link-h" aria-hidden="true"><Forward size={24} /></span>}
-          {i < steps.length - 1 && <span className="big-link-v" aria-hidden="true"><ArrowDown size={24} /></span>}
-        </div>)}
+        {steps.map((s, i) => <Fragment key={s.num}>
+          <div className="big-step">
+            <span className="big-num" dir="ltr">{s.num}</span>
+            <span className="big-icon"><s.icon size={26} /></span>
+            <h3>{ar ? s.titleAr : s.titleEn}</h3><p>{ar ? s.descAr : s.descEn}</p>
+          </div>
+          {i < steps.length - 1 && <span className="big-link-h" aria-hidden="true"><Forward size={22} /></span>}
+          {i < steps.length - 1 && <span className="big-link-v" aria-hidden="true"><ArrowDown size={22} /></span>}
+        </Fragment>)}
       </div>
     </section>
   </div>;
