@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowDown, ArrowLeft, ArrowRight, Gauge, Sun, Cpu, ToggleRight, BrainCircuit, Wifi, Server } from "lucide-react";
+import { ArrowDown, ArrowLeft, ArrowRight, Gauge, Sun, Cpu, ToggleRight, BrainCircuit, Wifi } from "lucide-react";
 import { useSolar } from "@/components/dashboard/SolarProvider";
 
 export default function HardwarePage() {
@@ -20,7 +20,6 @@ export default function HardwarePage() {
     { icon: Sun, color: "yellow", titleAr: "حساس الضوء BH1750", titleEn: "BH1750 light sensor", descAr: "قياس شدة الإضاءة لتوقع الإنتاج الشمسي", descEn: "Light intensity to anticipate solar output", meta: "I2C", badgeAr: "مجهز للتركيب 🟢", badgeEn: "Ready to install 🟢", ok: true },
     { icon: Cpu, color: "violet", titleAr: "المتحكم ESP32", titleEn: "ESP32 controller", descAr: "العقل الميداني الذي يرسل البيانات لاسلكيًا", descEn: "The field unit streaming data wirelessly", meta: "Wi-Fi", badgeAr: "قيد التوصيل 🟡", badgeEn: "Connecting 🟡", ok: false },
     { icon: ToggleRight, color: "teal", titleAr: "وحدة الريليهات والأحمال", titleEn: "Relays & loads unit", descAr: "مفاتيح كهربائية لتشغيل الأحمال والشواحن بأمان", descEn: "Electrical switches for safe load and charger control", meta: "AC / DC", badgeAr: "قيد التوصيل 🟡", badgeEn: "Connecting 🟡", ok: false },
-    { icon: Server, color: "blue", titleAr: "بوابة Raspberry Pi", titleEn: "Raspberry Pi gateway", descAr: "بوابة مستقبلية لتجميع القراءات والتحقق منها", descEn: "A future gateway to aggregate and validate readings", meta: "Raspberry Pi", badgeAr: "مرحلة مستقبلية 🔵", badgeEn: "Future stage 🔵", ok: false },
   ];
 
   return <>
