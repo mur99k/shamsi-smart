@@ -72,7 +72,7 @@ p { overflow-wrap: anywhere; }
 .mode-switch:hover { border-color: rgba(70,211,154,.55); background: rgba(70,211,154,.1); color: #f6fff9; }
 .mode-switch.is-hardware { border-color: rgba(243,190,73,.55); background: rgba(243,190,73,.1); color: #f3d98c; }
 .status-dot { width: 7px; height: 7px; border-radius: 50%; background: #2c8b5f; box-shadow: 0 0 0 3px #e5f2e9; }
-.language-button { min-height: 40px; min-width: 44px; border: 1px solid var(--border); border-radius: 4px; background: white; }
+.language-button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 40px; min-width: 44px; border: 1px solid var(--border); border-radius: 4px; background: white; }
 .icon-button { width: 42px; height: 42px; flex: 0 0 42px; display: inline-flex; align-items: center; justify-content: center; background: white; border: 1px solid var(--border); border-radius: 4px; }
 .icon-button:hover, .button:hover { background: #edf3ef; }
 .menu-button { display: none; }
@@ -137,6 +137,13 @@ progress::-webkit-progress-value { background: var(--accent); border-radius: 4px
 .scenario small { font-size: 11px; line-height: 1.7; color: var(--muted); display: block; margin-top: 5px; }
 .scenario.selected { background: #edf4ef; border-color: #7fae92; }
 .controls { margin-top: 24px; display: grid; gap: 22px; }
+.acc { border: 1px solid var(--border); border-radius: 14px; margin-top: 14px; background: #fff; overflow: clip; }
+.acc > summary { cursor: pointer; padding: 14px 16px; font-size: 14.5px; font-weight: 700; list-style-position: inside; }
+.acc > summary:hover { background: #f1f7f2; }
+.acc .controls, .acc .time-field, .acc fieldset { margin-inline: 16px; }
+.acc .controls { margin-top: 4px; gap: 16px; }
+.acc fieldset:last-of-type { margin-bottom: 16px; }
+.sim-inputs .button.primary { width: 100%; justify-content: center; margin-top: 14px; }
 .control-label { display: flex; justify-content: space-between; align-items: center; gap: 12px; font-size: 14px; margin-bottom: 10px; }
 .numeric-field { display: flex; align-items: center; gap: 5px; }
 .numeric-field input { width: 88px; padding: 4px 6px; text-align: end; }
@@ -564,9 +571,13 @@ body { background: #fcfdfb; }
   .energy-scene .sink small { font-size: 9px; }
   .energy-scene .balance-totals > div { gap: 6px; }
   .energy-scene .balance-totals dt { font-size: 10px; }
-  .energy-studio .metrics { gap: 16px 0; }
+  .energy-studio .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 0; padding: 14px 0; }
+  .energy-studio .metrics > div { padding: 0 14px; }
+  .energy-studio .metrics > div:nth-child(2) { border-inline-end: 0; }
   .energy-studio .metrics dd { font-size: 23px; }
-  .experience-insights { grid-template-columns: 1fr; gap: 28px; padding-top: 32px; }
+  .experience-insights { grid-template-columns: 1fr; gap: 24px; padding-top: 28px; }
+  .sim-inputs .controls { gap: 14px; }
+  .simulator-grid { gap: 18px; }
   .experience-insights .recommendation { padding-bottom: 0; }
   .hardware-preview { gap: 16px; padding-block: 24px; margin-top: 32px; }
   .hardware-symbol { display: none; }
@@ -797,7 +808,7 @@ tbody th { color: #244e3c; }
 .landing-feats .feat-hardware { border-top-color: #2563eb; }
 .landing-feats .feat-hardware .feature-icon { background: #2563eb; color: #fff; box-shadow: 0 8px 18px rgba(37, 99, 235, 0.4); }
 .landing-steps.big { grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr); align-items: stretch; }
-.landing-steps.big > div.big-step { position: relative; min-height: 220px; padding: 26px; border-radius: 18px; }
+.landing-steps.big > div.big-step { position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; min-height: 220px; padding: 26px; border-radius: 18px; }
 .big-num { font-size: 34px !important; font-weight: 800; color: #17634d !important; letter-spacing: 0 !important; }
 .big-icon { display: inline-grid; place-items: center; width: 56px; height: 56px; border-radius: 18px; background: #e4f0e8; color: #17634d; }
 .big-link-h { align-self: center; display: inline-grid; place-items: center; width: 40px; height: 40px; border-radius: 99px; background: #fff; border: 1px solid var(--border); color: #17634d; box-shadow: 0 8px 18px rgba(28, 76, 56, 0.15); }

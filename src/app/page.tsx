@@ -18,9 +18,9 @@ export default function Home() {
     { icon: PlugZap, cls: "feat-hardware", titleAr: "ربط مباشر مع أجهزة ESP32 والمستشعرات 🔌", titleEn: "Direct link with ESP32 devices & sensors 🔌", descAr: "نفس الحالة يمكن أن تأتي من حساسات حقيقية عبر USB لاحقًا.", descEn: "The same state can later come from real sensors over USB." },
   ];
   const steps = [
-    { icon: Sun, num: "01", titleAr: "اقرأ", titleEn: "Read", descAr: "إنتاج الشمس واستهلاك المنزل لحظة بلحظة.", descEn: "Solar production and home demand, moment by moment." },
-    { icon: Cpu, num: "02", titleAr: "حلّل", titleEn: "Analyze", descAr: "صافي الطاقة: فائض، توازن، أو عجز.", descEn: "Net state: surplus, balance, or shortage." },
-    { icon: BatteryCharging, num: "03", titleAr: "وجّه", titleEn: "Route", descAr: "بطارية أو سيارة أو حمل إضافي.", descEn: "Battery, EV, or an additional load." },
+    { icon: Sun, num: "1", titleAr: "اقرأ", titleEn: "Read", descAr: "إنتاج الشمس واستهلاك المنزل لحظة بلحظة.", descEn: "Solar production and home demand, moment by moment." },
+    { icon: Cpu, num: "2", titleAr: "حلّل", titleEn: "Analyze", descAr: "صافي الطاقة: فائض، توازن، أو عجز.", descEn: "Net state: surplus, balance, or shortage." },
+    { icon: BatteryCharging, num: "3", titleAr: "وجّه", titleEn: "Route", descAr: "بطارية أو سيارة أو حمل إضافي.", descEn: "Battery, EV, or an additional load." },
   ];
 
   return <div className="landing-page">
@@ -33,7 +33,7 @@ export default function Home() {
           <Link className="button primary glow" href="/simulator">🚀 {ar ? "ابدأ المحاكاة التفاعلية" : "Start the interactive simulator"}</Link>
           <Link className="button bordered" href="/hardware">🔌 {ar ? "استكشف الأجهزة والمكونات" : "Explore devices & components"}</Link>
         </div>
-        <span className="landing-note">{ar ? "نموذج برمجي للمحاكاة — لا توجد أجهزة متصلة حاليًا." : "Software simulation prototype — no hardware connected."}</span>
+        <span className="landing-note">{ar ? "نموذج برمجي للمحاكاة — لا توجد أجهزة متصلة حاليًا." : "Software simulation prototype — no hardware connected."} <Link className="text-link" href="/dashboard">{ar ? "عرض لوحة التحكم" : "View overview"}</Link></span>
       </div>
       <div className="landing-hero-visual">
         <div className="live-snapshot">
