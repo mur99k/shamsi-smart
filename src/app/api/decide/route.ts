@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { decide } from "@/lib/ai/decision";
 import { calculateEnergy } from "@/lib/energy/calculations";
+import { loadsCapacityW } from "@/lib/energy/scenarios";
 import type { DecisionRequest } from "@/types/energy";
 
 /**
@@ -25,7 +26,7 @@ export async function POST(req: Request) {
         levelPercent: Math.min(100, Math.max(0, Number(b?.batteryLevelPct ?? 40))),
       },
       ev: { available: b?.evAvailable === true, charging: false },
-      loads: { available: loadsArr.length > 0, totalCapacityW: loadsArr.length * 400 },
+      loads: { available: loadsArr.length > 0, totalCapacityW: loadsCapacityW(loadsArr) },
       environment: {
         currentTime: typeof b?.currentTime === "string" ? b.currentTime : undefined,
         estimatedSolarProductionNextHourW:

@@ -83,17 +83,27 @@ export const SCENARIOS: Scenario[] = [
 
 export const DEFAULT_SIM_STATE: SimState = { ...SCENARIOS[0].state };
 
-export const LOAD_PRESETS = [
-  "Water Heater",
-  "AC",
-  "Washing Machine",
-  "Water Pump",
-  "Heater",
-  "Lighting",
+export interface LoadPreset {
+  id: string;
+  en: string;
+  ar: string;
+  /** Typical draw in watts — a simulation example, not a measurement. */
+  watts: number;
+}
+
+export const LOAD_PRESETS: LoadPreset[] = [
+  { id: "Water Heater", en: "Water Heater", ar: "سخان المياه", watts: 1500 },
+  { id: "AC", en: "AC", ar: "مكيف", watts: 1800 },
+  { id: "Washing Machine", en: "Washing Machine", ar: "غسالة", watts: 900 },
+  { id: "Water Pump", en: "Water Pump", ar: "مضخة مياه", watts: 750 },
+  { id: "Heater", en: "Heater", ar: "مدفأة", watts: 1200 },
+  { id: "Lighting", en: "Lighting", ar: "إضاءة", watts: 120 },
 ];
 
-/** Avg. draw assumed per checked load when estimating totalCapacityW. */
-export const WATTS_PER_LOAD = 400;
+/** Sum of the example draws of the selected loads (simulation only). */
+export function loadsCapacityW(ids: string[]): number {
+  return ids.reduce((sum, id) => sum + (LOAD_PRESETS.find((l) => l.id === id)?.watts ?? 0), 0);
+}
 
 /**
  * Decision Request Builder — converts raw simulation knobs into the
@@ -104,7 +114,7 @@ export function buildDecisionRequest(s: SimState): DecisionRequest {
   const solar = Math.max(0, Math.round(s.solarProductionW));
   const load = Math.max(0, Math.round(s.consumptionW));
   const net = solar - load;
-  const totalCapacityW = s.availableLoads.length * WATTS_PER_LOAD;
+  const totalCapacityW = loadsCapacityW(s.availableLoads);
   const [hh = "12", mm = "30"] = (s.currentTime || "12:30").split(":");
   const today = new Date();
   const pad = (n: string) => n.padStart(2, "0");

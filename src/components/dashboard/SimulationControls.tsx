@@ -32,7 +32,6 @@ export default function SimulationControls({ sim, onChange, onAnalyze, loading, 
     ["batteryCapacityWh", ar ? "سعة البطارية" : "Battery capacity", 0, 15000, 500, "Wh"],
     ["futureSolarEstimateW", ar ? "توقع الإنتاج القادم" : "Expected solar ahead", 0, 2000, 50, "W"],
   ];
-  const loadAr = ["سخان المياه", "مكيف", "غسالة", "مضخة مياه", "مدفأة", "إضاءة"];
   return <section className="section"><h2>{ar ? "مدخلات المحاكاة" : "Simulation inputs"}</h2>
     <div className="controls">{fields.map(([key, label, min, max, step, unit]) => <Slider key={key} label={label} value={sim[key]} min={min} max={max} step={step} unit={unit} onChange={value => onChange({ [key]: value })} />)}</div>
     <label className="time-field">{ar ? "الوقت الحالي" : "Current time"}<input type="time" value={sim.currentTime} onChange={event => { if (event.target.value) onChange({ currentTime: event.target.value }); }} /></label>
@@ -41,7 +40,8 @@ export default function SimulationControls({ sim, onChange, onAnalyze, loading, 
       <label className="check-row"><input type="checkbox" checked={sim.evAvailable} onChange={event => onChange({ evAvailable: event.target.checked })} />{ar ? "السيارة الكهربائية متاحة" : "EV available"}</label>
       <label className="check-row"><input type="checkbox" checked={sim.evCharging} disabled={!sim.evAvailable} onChange={event => onChange({ evCharging: event.target.checked })} />{ar ? "السيارة قيد الشحن" : "EV already charging"}</label>
     </fieldset>
-    <fieldset><legend>{ar ? "الأحمال المتاحة" : "Available loads"}</legend><div className="load-options">{LOAD_PRESETS.map((load, i) => <label key={load} className="check-row"><input type="checkbox" checked={sim.availableLoads.includes(load)} onChange={event => onChange({ availableLoads: event.target.checked ? [...sim.availableLoads, load] : sim.availableLoads.filter(item => item !== load) })} />{ar ? loadAr[i] : load}</label>)}</div></fieldset>
+    <fieldset><legend>{ar ? "الأحمال المتاحة" : "Available loads"}</legend><div className="load-options">{LOAD_PRESETS.map((load) => <label key={load.id} className="check-row"><input type="checkbox" checked={sim.availableLoads.includes(load.id)} onChange={event => onChange({ availableLoads: event.target.checked ? [...sim.availableLoads, load.id] : sim.availableLoads.filter(item => item !== load.id) })} /><span>{ar ? load.ar : load.en}</span><small className="muted" dir="ltr">~{load.watts}W</small></label>)}</div>
+      <p className="small muted">{ar ? "قيم استرشادية للمحاكاة، وليست قياسات فعلية." : "Example draws for simulation, not real measurements."}</p></fieldset>
     <button className="button primary" onClick={onAnalyze} disabled={loading}>{loading ? (ar ? "جارٍ التحليل..." : "Analyzing...") : (ar ? "تحليل الحالة" : "Analyze state")}</button>
   </section>;
 }

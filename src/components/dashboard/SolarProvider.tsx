@@ -4,7 +4,7 @@ import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { calculateEnergy } from "@/lib/energy/calculations";
 import { fallbackDecide } from "@/lib/ai/fallback";
 import { buildDecisionRequest, DEFAULT_SIM_STATE, SCENARIOS, type SimState } from "@/lib/energy/scenarios";
-import type { DecisionResponse } from "@/types/energy";
+import type { DecisionResponse, RecommendedAction } from "@/types/energy";
 import type { Lang } from "./lang";
 
 export interface Message {
@@ -12,6 +12,7 @@ export interface Message {
   content: string;
   source?: "ai" | "fallback";
   snapshot: string;
+  decision?: RecommendedAction;
   error?: boolean;
 }
 
@@ -162,7 +163,7 @@ function useSolarState() {
     chatRequest.current = controller;
     const state = buildDecisionRequest(sim);
     const snapshot = `${state.solarProductionW}W / ${state.consumptionW}W / ${state.battery.levelPercent}%`;
-    const next: Message[] = [...messages, { role: "user" as const, content, snapshot }].slice(-39);
+    const next: Message[] = [...messages, { role: "user" as const, content, snapshot, decision: decision.recommendedAction }].slice(-39);
     setMessages(next);
     setDraft("");
     setChatLoading(true);
@@ -177,7 +178,7 @@ function useSolarState() {
       });
       const data = await response.json();
       if (!response.ok || !data?.success || typeof data.reply !== "string") throw new Error("Chat unavailable");
-      setMessages([...next, { role: "assistant", content: data.reply, source: data.source === "ai" ? "ai" : "fallback", snapshot }].slice(-40) as Message[]);
+      setMessages([...next, { role: "assistant", content: data.reply, source: data.source === "ai" ? "ai" : "fallback", snapshot, decision: decision.recommendedAction }].slice(-40) as Message[]);
     } catch {
       setMessages([...next, { role: "assistant", content: lang === "ar" ? "تعذر الحصول على رد. أعد إرسال سؤالك للمحاولة مجدداً." : "Could not get a reply. Send your question again to retry.", snapshot, error: true }].slice(-40) as Message[]);
     } finally {
