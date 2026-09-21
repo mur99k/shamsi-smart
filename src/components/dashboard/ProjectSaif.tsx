@@ -9,7 +9,7 @@ export default function ProjectSaif({ lang }: { lang: Lang }) {
   const steps = [
     { icon: FlaskConical, titleAr: "محاكاة برمجية", titleEn: "Software simulation", descAr: "تعمل الآن — مدخلات افتراضية وقرارات استرشادية", descEn: "Live now — simulated inputs, advisory decisions", stateAr: "نشط", stateEn: "Active", done: true },
     { icon: Cable, titleAr: "واجهة القياس", titleEn: "Telemetry API", descAr: "‎/api/telemetry جاهزة لاستقبال قراءات حقيقية", descEn: "/api/telemetry ready for real readings", stateAr: "جاهز", stateEn: "Ready", done: true },
-    { icon: Cpu, titleAr: "ربط ESP32", titleEn: "ESP32 link", descAr: "إرسال القياسات الحية من العتاد إلى النموذج", descEn: "Streaming live measurements from hardware", stateAr: "مخطط", stateEn: "Planned", done: false },
+    { icon: Cpu, titleAr: "ربط ESP32", titleEn: "ESP32 link", descAr: "إرسال القياسات الحية من الأجهزة إلى النموذج", descEn: "Streaming live measurements from hardware", stateAr: "مخطط", stateEn: "Planned", done: false },
     { icon: Rocket, titleAr: "تشغيل ميداني تجريبي", titleEn: "Field pilot", descAr: "اختبار ميداني مع عدّادات Wh واختبارات أمان", descEn: "Field test with Wh metering and safety checks", stateAr: "مستقبل", stateEn: "Future", done: false },
   ];
   return <article className="project-showcase">
@@ -43,7 +43,7 @@ export default function ProjectSaif({ lang }: { lang: Lang }) {
     </section>
 
     <section className="hw-timeline-panel">
-      <div className="hw-timeline-head"><h2>{ar ? "مراحل التكامل مع الأجهزة الحقيقية" : "Real-hardware integration stages"}</h2><Link href="/hardware" className="button">{ar ? "خطة العتاد" : "Hardware plan"}</Link></div>
+      <div className="hw-timeline-head"><h2>{ar ? "مراحل التكامل مع الأجهزة الحقيقية" : "Real-hardware integration stages"}</h2><Link href="/hardware" className="button">{ar ? "الأجهزة والمكونات" : "Hardware devices"}</Link></div>
       <ol className="hw-timeline">
         {steps.map(s => <li key={s.titleEn} className={s.done ? "hw-step done" : "hw-step"}>
           <span className="hw-dot"><s.icon size={18} /></span>

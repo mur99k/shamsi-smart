@@ -13,7 +13,7 @@ const routes = [
   ["/assistant", "Assistant", "المساعد", MessagesSquare],
   ["/evaluation", "Evaluation", "التقييم", ClipboardCheck],
   ["/project", "Project", "المشروع", FileText],
-  ["/hardware", "Hardware", "العتاد", Cpu],
+  ["/hardware", "Hardware", "الأجهزة والمكونات", Cpu],
 ] as const;
 
 export default function AppShell({ children }: { children: React.ReactNode }) {

@@ -24,7 +24,7 @@ export default function HardwarePage() {
   ];
 
   return <>
-    <div className="page-heading"><div><h1>{ar ? "دليل التكامل والربط الفيزيائي" : "Hardware Integration Hub"}</h1><p>{ar ? "استعراض الأجهزة والمستشعرات المادية ومسار ربطها مع محرك الذكاء الاصطناعي." : "Physical devices and sensors, and how they connect to the AI engine."}</p></div><span className="badge">{ar ? "مخطط" : "Planned"}</span></div>
+    <div className="page-heading"><div><h1>{ar ? "الأجهزة والمكونات الفيزيائية" : "Physical Devices & Components"}</h1><p>{ar ? "استعراض الأجهزة والمستشعرات المادية ومسار ربطها مع محرك الذكاء الاصطناعي." : "Physical devices and sensors, and how they connect to the AI engine."}</p></div><span className="badge">{ar ? "مخطط" : "Planned"}</span></div>
     <p className="notice">{ar ? "الوضع الحالي: محاكاة برمجية. لا توجد حساسات أو ESP32 أو Raspberry Pi أو أحمال فعلية متصلة." : "Current mode: software simulation. No sensors, ESP32, Raspberry Pi or physical loads are connected."}</p>
 
     <section className="hw-hub-panel">
