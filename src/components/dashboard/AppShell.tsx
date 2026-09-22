@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useRef, useState } from "react";
-import { Menu, X, Cable, House, LayoutDashboard, SlidersHorizontal, MessagesSquare, ClipboardCheck, FileText, Cpu, Globe } from "lucide-react";
+import { Menu, X, Cable, House, LayoutDashboard, SlidersHorizontal, MessagesSquare, ClipboardCheck, FileText, Cpu, Globe, Siren } from "lucide-react";
 import { useSolar } from "./SolarProvider";
 
 const routes = [
@@ -13,6 +13,7 @@ const routes = [
   ["/simulator", "Simulator", "المحاكي", SlidersHorizontal],
   ["/assistant", "Assistant", "المساعد", MessagesSquare],
   ["/evaluation", "Evaluation", "التقييم", ClipboardCheck],
+  ["/alerts", "Alerts", "التنبيهات", Siren],
   ["/project", "Project", "المشروع", FileText],
   ["/hardware", "Hardware", "الأجهزة والمكونات", Cpu],
 ] as const;
