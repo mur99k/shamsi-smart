@@ -28,6 +28,7 @@ function useSolarState() {
   const [chatLoading, setChatLoading] = useState(false);
   const [dataMode, setDataMode] = useState<"simulation" | "hardware">("simulation");
   const [serialStatus, setSerialStatus] = useState<"unsupported" | "disconnected" | "connecting" | "connected">("disconnected");
+  const [live, setLive] = useState<{ solarW: number; consumptionW: number; batteryPct: number | null; ageMs: number } | null>(null);
   const revision = useRef(0);
   const decisionRequest = useRef<AbortController | null>(null);
   const chatRequest = useRef<AbortController | null>(null);
@@ -43,6 +44,26 @@ function useSolarState() {
     chatRequest.current?.abort();
     serialAbort.current?.abort();
     serialReader.current?.cancel().catch(() => undefined);
+  }, []);
+  // Poll the latest accepted ESP32 reading; the homepage shows it when fresh.
+  useEffect(() => {
+    let alive = true;
+    const poll = async () => {
+      try {
+        const res = await fetch("/api/telemetry");
+        const data = await res.json();
+        if (!alive || !res.ok) return;
+        const l = data?.latest;
+        if (l && typeof data?.ageMs === "number") {
+          setLive({ solarW: l.solarProductionW, consumptionW: l.consumptionW, batteryPct: l.batteryLevelPercent ?? null, ageMs: data.ageMs });
+        } else if (alive) {
+          setLive(null);
+        }
+      } catch { /* telemetry unavailable — simulation values stay */ }
+    };
+    poll();
+    const timer = setInterval(poll, 5000);
+    return () => { alive = false; clearInterval(timer); };
   }, []);
 
   const calc = calculateEnergy(sim.solarProductionW, sim.consumptionW);
@@ -190,7 +211,7 @@ function useSolarState() {
 
   return { lang, setLang, sim, calc, scenarioId, patch, applyScenario, result, decision, loading, analysisError, analyze,
     messages, draft, setDraft, chatLoading, send, clearChat: () => { if (!chatRequest.current) setMessages([]); },
-    dataMode, serialStatus, connectSerial, disconnectSerial };
+    dataMode, serialStatus, connectSerial, disconnectSerial, live };
 }
 
 const SolarContext = createContext<ReturnType<typeof useSolarState> | null>(null);

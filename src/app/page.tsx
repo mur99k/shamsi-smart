@@ -7,10 +7,14 @@ import { ACTION_META } from "@/types/energy";
 import { useSolar } from "@/components/dashboard/SolarProvider";
 
 export default function Home() {
-  const { lang, sim, calc, decision } = useSolar();
+  const { lang, sim, calc, decision, live } = useSolar();
   const ar = lang === "ar";
   const Forward = ar ? ArrowLeft : ArrowRight;
   const action = ACTION_META[decision.recommendedAction];
+  const liveFresh = live !== null && live.ageMs < 20000;
+  const showSolar = liveFresh ? Math.round(live.solarW) : calc.solarProductionW;
+  const showLoad = liveFresh ? Math.round(live.consumptionW) : calc.consumptionW;
+  const showBatt = liveFresh && live.batteryPct !== null ? `${Math.round(live.batteryPct)}%` : `${sim.batteryLevelPct}%`;
 
   const features = [
     { icon: Activity, cls: "feat-live", titleAr: "تحليل لحظي", titleEn: "Live analysis", descAr: "الحالة والقرار يتحدثان فور تغيير الإنتاج أو الاستهلاك.", descEn: "State and decision update the moment production or demand changes." },
@@ -39,10 +43,11 @@ export default function Home() {
         <div className="live-snapshot">
           <span className="live-pulse" aria-hidden="true"><Zap size={13} /></span>
           <h2>{ar ? "حالة النظام الآن" : "Live system state"}</h2>
+          <p className={`live-source ${liveFresh ? "is-live" : ""}`} role="status">{liveFresh ? (ar ? "مباشر من ESP32 🟢" : "Live from ESP32 🟢") : (ar ? "محاكاة افتراضية" : "Simulated values")}</p>
           <dl>
-            <div><dt>{ar ? "الإنتاج" : "Solar"}</dt><dd dir="ltr" className="num">{calc.solarProductionW} W</dd></div>
-            <div><dt>{ar ? "الاستهلاك" : "Load"}</dt><dd dir="ltr" className="num">{calc.consumptionW} W</dd></div>
-            <div><dt>{ar ? "البطارية" : "Battery"}</dt><dd dir="ltr" className="num">{sim.batteryLevelPct}%</dd></div>
+            <div><dt>{ar ? "الإنتاج" : "Solar"}</dt><dd dir="ltr" className="num">{showSolar} W</dd></div>
+            <div><dt>{ar ? "الاستهلاك" : "Load"}</dt><dd dir="ltr" className="num">{showLoad} W</dd></div>
+            <div><dt>{ar ? "البطارية" : "Battery"}</dt><dd dir="ltr" className="num">{showBatt}</dd></div>
           </dl>
           <p className="live-decision">{ar ? action.labelAr : action.labelEn}</p>
           <Link className="button primary" href="/simulator">{ar ? "افتح المحاكي" : "Open simulator"}</Link>

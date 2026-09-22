@@ -819,6 +819,8 @@ tbody th { color: #244e3c; }
 .live-snapshot dl { display: grid; gap: 8px; margin: 0 0 12px; }
 .live-snapshot dl > div { display: flex; align-items: center; justify-content: space-between; border-radius: 10px; padding: 8px 12px; background: #f1f7f2; font-size: 13px; }
 .live-snapshot dl dd { margin: 0; font-weight: 700; }
+.live-source { font-size: 12px; font-weight: 700; border-radius: 8px; padding: 5px 10px; margin-bottom: 10px; background: #eef1f4; color: #64748b; text-align: center; }
+.live-source.is-live { background: #d1fae5; color: #047857; }
 .live-decision { border-radius: 10px; padding: 9px 12px; margin-bottom: 14px; background: #e2f2e7; color: #205c3e; font-size: 13px; font-weight: 700; }
 .live-snapshot .button { width: 100%; justify-content: center; }
 .landing-feats .feature-card { border-radius: 18px; padding: 24px; border: 1px solid var(--border); border-top: 4px solid #94a3b8; transition: transform 180ms ease-out, box-shadow 180ms ease-out; }
