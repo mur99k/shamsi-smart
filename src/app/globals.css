@@ -860,7 +860,7 @@ body { background: #fbfdfb; color: var(--ink); }
 .recommendation, .understand-energy, .section, .architecture, .case-study section { border-color: var(--border); }
 .recommendation h3 { color: #17634d; }
 .recommendation-hero { border-radius: 20px; background: linear-gradient(160deg, #ffffff, #f1f7f2); border: 1.5px solid #b9d8c3; box-shadow: 0 16px 40px rgba(4, 120, 87, 0.14); padding: 22px; margin-top: 24px; }
-.rec-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+.rec-top { display: flex; align-items: center; justify-content: flex-start; gap: 10px; margin-bottom: 10px; }
 .rec-top h2 { font-size: 16px; }
 .rec-decision { font-size: 24px !important; margin: 4px 0 8px !important; }
 .rec-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 14px; }
