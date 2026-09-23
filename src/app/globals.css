@@ -198,14 +198,14 @@ progress::-webkit-progress-value { background: var(--accent); border-radius: 4px
 .scenario.selected { background: #edf4ef; border-color: #7fae92; }
 .controls { margin-top: 24px; display: grid; gap: 22px; }
 .control-row input[type="range"] { -webkit-appearance: none; appearance: none; width: 100%; height: 8px; border-radius: 99px; background: linear-gradient(90deg, #047857 var(--fill, 50%), #e2e8f0 var(--fill, 50%)); outline-offset: 4px; cursor: pointer; }
-.control-row input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; border-radius: 99px; background: #fff; border: 3px solid #047857; box-shadow: 0 3px 10px rgba(4, 120, 87, 0.35); cursor: grab; }
+.control-row input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; margin-top: -7px; border-radius: 99px; background: #fff; border: 3px solid #047857; box-shadow: 0 3px 10px rgba(4, 120, 87, 0.35); cursor: grab; }
 .control-row input[type="range"]::-moz-range-thumb { width: 16px; height: 16px; border-radius: 99px; background: #fff; border: 3px solid #047857; box-shadow: 0 3px 10px rgba(4, 120, 87, 0.35); cursor: grab; }
 .control-row input[type="range"]::-moz-range-track { height: 8px; border-radius: 99px; background: #e2e8f0; }
-.sim-inputs fieldset { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.sim-inputs fieldset { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; padding: 1rem; }
 .sim-inputs fieldset > legend, .sim-inputs fieldset > p { grid-column: 1 / -1; }
 .check-row { display: flex; align-items: center; gap: 10px; border-radius: 12px; padding: 12px; background: #f8fafc; border: 1px solid var(--border); font-size: 13.5px; min-width: 0; min-height: 52px; overflow: hidden; }
 .check-row input { flex: none; width: 18px; height: 18px; accent-color: #047857; }
-.check-row span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+.check-row span { min-width: 0; flex: 1; overflow-wrap: break-word; }
 .check-row small { flex: none; }
 .load-options { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px; }
 .acc { border: 1px solid var(--border); border-radius: 14px; margin-top: 14px; background: #fff; overflow: clip; }

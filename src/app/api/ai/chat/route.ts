@@ -95,7 +95,8 @@ export async function POST(req: Request) {
       ? { recommendedAction: din.recommendedAction as RecommendedAction, reason: din.reason as string }
       : undefined;
 
-  const result = await chatReply({ state, decision, lang, messages });
+  const result = await chatReply({ state, decision, lang, messages }).catch(() => null);
+  if (!result) return NextResponse.json({ success: false, error: "SERVICE_UNAVAILABLE", message: "Assistant is temporarily unavailable. Please try again." }, { status: 503 });
   return NextResponse.json({ success: true, ...result }, { status: 200 });
 }
 
