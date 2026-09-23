@@ -228,7 +228,7 @@ progress::-webkit-progress-value { background: var(--accent); border-radius: 4px
 input[type="time"], textarea, .numeric-field input[type="text"] { border: 1px solid #aebcb4; background: white; border-radius: 4px; color: var(--ink); }
 input[type="range"] { width: 100%; accent-color: var(--accent); height: 22px; cursor: pointer; }
 input[type="checkbox"], input[type="radio"] { accent-color: var(--accent); width: 17px; height: 17px; flex-shrink: 0; }
-.time-field { display: flex; justify-content: space-between; gap: 10px; align-items: center; margin-top: 24px; }
+.time-field { display: flex; justify-content: space-between; gap: 10px; align-items: center; margin-top: 24px; margin-bottom: 20px; }
 .time-field input { padding: 8px 10px; width: 96px; text-align: center; font-weight: 800; font-variant-numeric: tabular-nums; }
 .simulator-grid fieldset:not(.scenario-picker) { border: 0; border-top: 1px solid var(--border); margin: 24px 0; padding: 16px 0 0; }
 legend { padding: 0 6px; font-size: 14px; }
