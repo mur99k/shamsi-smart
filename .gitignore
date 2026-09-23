@@ -44,3 +44,7 @@ yarn-error.log*
 next-env.d.ts
 
 .playwright-cli/
+.vercel
+
+# Local poster/template assets (large PDFs, not part of the app)
+PDF/

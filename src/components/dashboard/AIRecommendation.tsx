@@ -8,6 +8,8 @@ export default function AIRecommendation() {
   const { result, decision, lang, loading, analysisError, analyze, calc } = useSolar();
   const ar = lang === "ar";
   const meta = ACTION_META[decision.recommendedAction];
+  const statusAr = calc.status === "SURPLUS" ? "فائض" : calc.status === "SHORTAGE" ? "عجز" : "استقرار";
+  const statusEn = calc.status === "SURPLUS" ? "surplus" : calc.status === "SHORTAGE" ? "shortage" : "balanced";
   const localReasons = {
     battery_storage: `يتوفر فائض ${calc.excessEnergyW}W. تعطي القاعدة المحلية أولوية لشحن البطارية المتاحة بسعة موجبة عندما يكون مستواها أقل من 80%.`,
     ev_charging: `يتوفر فائض ${calc.excessEnergyW}W. بعد شرط أولوية البطارية، تقترح القاعدة شحن السيارة المتاحة التي ليست قيد الشحن.`,
@@ -16,13 +18,13 @@ export default function AIRecommendation() {
     no_action: "لا يُقترح إجراء إضافي. عند التوازن يتساوى الإنتاج والاستهلاك، فلا يوجد فائض أو عجز.",
     energy_shortage: `يتجاوز الاستهلاك الإنتاج بمقدار ${calc.energyShortageW}W. لا يوجد فائض لإعادة التوجيه؛ يُقترح تقليل الأحمال غير الأساسية.`,
   };
-  return <section className="section recommendation" aria-busy={loading}>
-    <div className="section-heading"><h2>{ar ? "التوصية الحالية" : "Current recommendation"}</h2><span className="badge">{result ? result.source === "ai" ? (ar ? "ذكاء اصطناعي" : "AI response") : (ar ? "استجابة احتياطية" : "Server fallback") : (ar ? "معاينة محلية" : "Local preview")}</span></div>
-    <h3>{ar ? meta.labelAr : meta.labelEn}</h3>
+  return <section className="section recommendation recommendation-hero" aria-busy={loading}>
+    <div className="rec-top"><h2>{ar ? "التوصية الحالية" : "Current recommendation"}</h2><span className={`badge status-${calc.status.toLowerCase()}`}>{ar ? statusAr : statusEn}</span></div>
+    <h3 className="rec-decision">{ar ? meta.labelAr : meta.labelEn}</h3>
     <p className="reason" dir="auto">{ar && !result ? localReasons[decision.recommendedAction] : decision.reason}</p>
+    <div className="rec-actions"><button className="button primary" disabled={loading} onClick={analyze}>{loading ? <LoaderCircle className="spin" size={17} /> : <RefreshCw size={17} />}{loading ? (ar ? "جارٍ التحليل..." : "Analyzing...") : (ar ? "تحليل الحالة" : "Analyze state")}</button><span className="badge">{result ? result.source === "ai" ? (ar ? "ذكاء اصطناعي" : "AI response") : (ar ? "استجابة احتياطية" : "Server fallback") : (ar ? "معاينة محلية" : "Local preview")}</span></div>
     {result?.decision.confidence != null && <p className="muted">{ar ? "ثقة النموذج، وليست دقة مقاسة" : "Model confidence, not measured accuracy"}: {Math.round(result.decision.confidence * 100)}%</p>}
     <div role="status">{analysisError && <p className="error-text">{ar ? "تعذر التحليل. المعاينة المحلية متاحة؛ حاول مجدداً." : "Analysis unavailable. Local preview remains available; try again."}</p>}</div>
-    <button className="button" disabled={loading} onClick={analyze}>{loading ? <LoaderCircle className="spin" size={17} /> : <RefreshCw size={17} />}{loading ? (ar ? "جارٍ التحليل..." : "Analyzing...") : (ar ? "تحليل الحالة" : "Analyze state")}</button>
     <p className="muted small">{ar ? "توصية استرشادية فقط. لا يتم تشغيل أجهزة فعلية." : "Advisory only. No physical devices are operated."}</p>
   </section>;
 }
