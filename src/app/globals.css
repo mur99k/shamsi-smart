@@ -212,8 +212,8 @@ progress::-webkit-progress-value { background: var(--accent); border-radius: 4px
 .check-row span { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 600; }
 .check-row small { flex: none; }
 .load-options { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px; }
-.acc { border: 1px solid var(--border); border-radius: 14px; margin-top: 14px; background: #fff; overflow: clip; }
-.acc > summary { cursor: pointer; padding: 14px 16px; font-size: 14.5px; font-weight: 700; list-style-position: inside; }
+.acc { border: 1px solid var(--border); border-radius: 18px; margin-top: 18px; background: #fff; overflow: clip; box-shadow: 0 8px 24px rgba(23, 61, 51, 0.06); }
+.acc > summary { cursor: pointer; padding: 18px; font-size: 15.5px; font-weight: 800; list-style-position: inside; }
 .acc > summary:hover { background: #f1f7f2; }
 .acc .controls, .acc .time-field, .acc fieldset { margin-inline: 16px; }
 .acc .controls { margin-top: 4px; gap: 16px; }
@@ -223,8 +223,8 @@ progress::-webkit-progress-value { background: var(--accent); border-radius: 4px
 .sim-inputs .button.primary { width: 100%; justify-content: center; margin-top: 14px; }
 .control-label { display: flex; justify-content: space-between; align-items: center; gap: 12px; font-size: 14px; margin-bottom: 10px; }
 .numeric-field { display: flex; align-items: center; gap: 5px; }
-.numeric-field input { width: 88px; padding: 4px 6px; text-align: end; }
-.numeric-field span { width: 24px; color: var(--muted); font-size: 12px; }
+.numeric-field input { width: 100px; padding: 8px 10px; text-align: end; font-size: 15px; }
+.numeric-field span { width: 28px; color: var(--muted); font-size: 13px; font-weight: 700; }
 input[type="time"], textarea, .numeric-field input[type="text"] { border: 1px solid #aebcb4; background: white; border-radius: 4px; color: var(--ink); }
 input[type="range"] { width: 100%; accent-color: var(--accent); height: 22px; cursor: pointer; }
 input[type="checkbox"], input[type="radio"] { accent-color: var(--accent); width: 17px; height: 17px; flex-shrink: 0; }
