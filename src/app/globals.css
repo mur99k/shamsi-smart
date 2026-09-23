@@ -229,7 +229,7 @@ input[type="time"], textarea, .numeric-field input[type="text"] { border: 1px so
 input[type="range"] { width: 100%; accent-color: var(--accent); height: 22px; cursor: pointer; }
 input[type="checkbox"], input[type="radio"] { accent-color: var(--accent); width: 17px; height: 17px; flex-shrink: 0; }
 .time-field { display: flex; justify-content: space-between; gap: 10px; align-items: center; margin-top: 24px; }
-.time-field input { padding: 5px; }
+.time-field input { padding: 8px 10px; width: 96px; text-align: center; font-weight: 800; font-variant-numeric: tabular-nums; }
 .simulator-grid fieldset:not(.scenario-picker) { border: 0; border-top: 1px solid var(--border); margin: 24px 0; padding: 16px 0 0; }
 legend { padding: 0 6px; font-size: 14px; }
 .check-row { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 54px; padding: 12px 14px; font-size: 14px; cursor: pointer; border-radius: 16px; background: #ffffff; border: 1.5px solid #e2e8f0; box-shadow: 0 4px 14px rgba(23, 61, 51, 0.06); overflow: hidden; transition: background-color 200ms ease, border-color 200ms ease, box-shadow 200ms ease; }

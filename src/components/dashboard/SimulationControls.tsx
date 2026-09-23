@@ -4,6 +4,20 @@ import { useState, type CSSProperties } from "react";
 import { LOAD_PRESETS, type SimState } from "@/lib/energy/scenarios";
 import type { Lang } from "./lang";
 
+export function TimeField({ value, label, onChange }: { value: string; label: string; onChange: (value: string) => void }) {
+  const [draft, setDraft] = useState<string | null>(null);
+  const commit = (raw: string) => {
+    const m = /^(\d{1,2}):(\d{2})/.exec(raw.trim());
+    if (m) {
+      const hh = Math.min(23, Math.max(0, Number(m[1])));
+      const mm = Math.min(59, Math.max(0, Number(m[2])));
+      onChange(`${String(hh).padStart(2, "0")}:${String(mm).padStart(2, "0")}`);
+    }
+    setDraft(null);
+  };
+  return <label className="time-field">{label}<input type="text" inputMode="numeric" dir="ltr" lang="en" aria-label={label} placeholder="12:30" maxLength={5} value={draft ?? value} onFocus={() => setDraft(value)} onChange={event => setDraft(event.target.value)} onBlur={event => commit(event.target.value)} onKeyDown={event => { if (event.key === "Enter") (event.target as HTMLInputElement).blur(); }} /></label>;
+}
+
 export function Slider({ label, value, min, max, step, unit, onChange }: {
   label: string; value: number; min: number; max: number; step: number; unit: string; onChange: (value: number) => void;
 }) {
@@ -39,7 +53,7 @@ export default function SimulationControls({ sim, onChange, onAnalyze, loading, 
   return <section className="section sim-inputs"><h2>{ar ? "مدخلات المحاكاة" : "Simulation inputs"}</h2>
     <details className="acc" open><summary>{ar ? "☀️ سيناريو الإنتاج" : "☀️ Production scenario"}</summary>
       <div className="controls">{prodFields.map(([key, label, min, max, step, unit]) => <Slider key={key} label={label} value={sim[key]} min={min} max={max} step={step} unit={unit} onChange={value => onChange({ [key]: value })} />)}</div>
-      <label className="time-field">{ar ? "الوقت الحالي" : "Current time"}<input type="time" value={sim.currentTime} onChange={event => { if (event.target.value) onChange({ currentTime: event.target.value }); }} /></label>
+      <TimeField label={ar ? "الوقت الحالي" : "Current time"} value={sim.currentTime} onChange={currentTime => onChange({ currentTime })} />
     </details>
     <details className="acc" open><summary>{ar ? "🔌 الأجهزة والأحمال" : "🔌 Devices & loads"}</summary>
       <div className="controls">{deviceFields.map(([key, label, min, max, step, unit]) => <Slider key={key} label={label} value={sim[key]} min={min} max={max} step={step} unit={unit} onChange={value => onChange({ [key]: value })} />)}</div>
