@@ -1,21 +1,26 @@
 "use client";
 
 import { useState } from "react";
-import { Siren, Droplets, Cable, Wrench, CircleHelp, Clapperboard, Smartphone, Laptop, Monitor } from "lucide-react";
+import { Droplets, SearchCheck, Wrench, CircleHelp, Smartphone, Laptop, Monitor } from "lucide-react";
 import { useSolar } from "@/components/dashboard/SolarProvider";
 
 export default function AlertsPage() {
   const { lang } = useSolar();
   const ar = lang === "ar";
-  const [sprinkle, setSprinkle] = useState(false);
-  const [tech, setTech] = useState(false);
   const [autoWash, setAutoWash] = useState(false);
   const [washed, setWashed] = useState(false);
+  const [tech, setTech] = useState(false);
+  const [inspect, setInspect] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
 
   const runWash = () => {
-    setSprinkle(true); setTech(false); setWashed(true);
-    setToast(ar ? "بدأ رش الماء على اللوح رقم 2 — جارٍ تحديث حالته..." : "Sprinklers started on panel 2 — updating its status...");
+    setWashed(true); setTech(false);
+    setToast(ar ? "بدأ رش الماء على اللوح رقم 2 — عاد للإنتاج الكامل." : "Sprinklers started on panel 2 — back to full output.");
+    window.setTimeout(() => setToast(null), 3500);
+  };
+  const callTech = () => {
+    setTech(true);
+    setToast(ar ? "تم إرسال التقرير للفني المعتمد." : "Report sent to the certified technician.");
     window.setTimeout(() => setToast(null), 3500);
   };
 
@@ -23,44 +28,27 @@ export default function AlertsPage() {
     {toast && <div role="status" className="alert-toast">{toast}</div>}
     <div className="page-heading"><div><h1>{ar ? "نظام التشخيص والتنبيهات الذكية" : "Smart Fault Diagnostics & Alerts"}</h1><p>{ar ? "مراقبة فورية وتأكيد سلامة الألواح الشمسية" : "Real-time monitoring and solar panel safety assurance"}</p></div><span className="badge">🔋 SolarWise</span></div>
 
-    <div className="alert-alexa"><span aria-hidden="true">🎙️</span>{ar ? "جاهز للربط الصوتي مستقبلًا مع Alexa — «أليكسا، كيف حالة الطاقة الشمسية؟»" : "Voice-ready for future Alexa link — “Alexa, how is my solar doing?”"}</div>
+    <div className="alert-alexa"><span aria-hidden="true">🎙️</span>{ar ? "جاهز للربط الصوتي مستقبلًا مع Alexa" : "Voice-ready for future Alexa link"}</div>
 
-    <div className="alert-grid">
-      <article className="alert-card ok">
-        <h2>{ar ? "اللوح رقم 1" : "Panel 1"} <span className="alert-tag ok" dir="ltr">98W · {ar ? "ممتاز" : "Excellent"}</span></h2>
-        <p>{ar ? "يعمل بالطاقة الإنتاجية الكاملة دون ظلال." : "Running at full output with no shading."}</p>
-      </article>
-      <article className={`alert-card ${washed ? "ok" : "error"}`}>
-        <h2>{ar ? "اللوح رقم 2" : "Panel 2"} <span className={`alert-tag ${washed ? "ok" : "warn"}`} dir="ltr">{washed ? (ar ? "ممتاز بعد الغسيل ✨" : "Excellent after wash ✨") : "22W · " + (ar ? "انخفاض" : "Low")}</span></h2>
-        <p>{washed ? (ar ? "عاد للإنتاج الكامل بعد التنظيف." : "Back to full output after cleaning.") : (ar ? "تنبيه: أداء منخفض جدًا يتطلب التدخل." : "Alert: very low output, action needed.")}</p>
-      </article>
+    <article className={`alert-card fault ${washed ? "ok" : "error"}`}>
+      <h2>⚠️ {ar ? "تنبيه: اللوح رقم 2 فيه انخفاض أداء (غبار/وساخة)" : "Alert: Panel 2 underperforming (dust/dirt)"}</h2>
+      <p>{ar ? "المتوقع" : "Expected"}: <b dir="ltr">100W</b> · {ar ? "الفعلي" : "Actual"}: <b dir="ltr">{washed ? "98W" : "22W"}</b>{washed && (ar ? " — تم الإصلاح بالغسيل ✨" : " — fixed by washing ✨")}</p>
+    </article>
+
+    <div className="alert-actions">
+      <button className="button primary big" onClick={runWash}><Droplets size={22} aria-hidden="true" /><span>{ar ? "تشغيل الرشاش الآلي" : "Run auto sprinklers"}</span></button>
+      <button className="button big" aria-expanded={inspect} onClick={() => setInspect(v => !v)}><SearchCheck size={22} aria-hidden="true" /><span>{ar ? "طريقة فحص الأسلاك" : "How to inspect wiring"}</span></button>
+      <button className="button big" onClick={callTech}><Wrench size={22} aria-hidden="true" /><span>{ar ? "طلب صيانة" : "Request maintenance"}</span></button>
     </div>
+    {inspect && <p role="status" className="alert-inspect">{ar ? "افتح الغطاء الخلفي للوح رقم 2 وتأكد أن الكابل مشبوك بإحكام ولا توجد أسلاك مكشوفة." : "Open panel 2 rear cover and make sure its cable is firmly connected with no exposed wires."}</p>}
+    {tech && <p role="status" className="alert-status">{ar ? "تم إرسال التقرير والتشخيص للفني المعتمد." : "Report sent to the certified technician."}</p>}
 
     <div className="alert-wash-row">
       <button role="switch" aria-checked={autoWash} onClick={() => setAutoWash(v => !v)} className={`wash-switch ${autoWash ? "on" : ""}`}><span className="wash-knob" aria-hidden="true" /></button>
       <span>{ar ? "تفعيل الغسيل الآلي عند تراكم الغبار وتراجع الأداء" : "Enable auto-wash when dust builds up and output drops"}</span>
     </div>
 
-    <article className="alert-card savings">
-      <h2>💰 {ar ? "وفّرت هذا الشهر 300 ريال" : "Saved SAR 300 this month"}</h2>
-      <p>{ar ? "تكاليف صيانة بفضل التشخيص الذاتي والغسيل الآلي." : "In maintenance costs thanks to self-diagnosis and auto-wash."}</p>
-      <small className="muted">{ar ? "مثال توضيحي — ليس قياسًا فعليًا." : "Illustrative example — not a real measurement."}</small>
-    </article>
-
-    <section className="alert-diagnostic">
-      <h2><Siren size={20} aria-hidden="true" />{ar ? "تم اكتشاف انخفاض كفاءة في [اللوح رقم 2]" : "Efficiency drop detected in [Panel 2]"}</h2>
-      <p className="muted">{ar ? "المتوقع" : "Expected"}: <b dir="ltr">100W</b> · {ar ? "الفعلي" : "Actual"}: <b dir="ltr">22W</b></p>
-      <ol>
-        <li><b>{ar ? "تنظيف اللوح:" : "Clean the panel:"}</b> {ar ? "مسح الغبار عن اللوح رقم 2." : "Wipe dust off panel 2."} <button className="button" onClick={runWash}><Droplets size={15} />{ar ? "تشغيل رشاش الماء الآلي" : "Run auto sprinklers"}</button></li>
-        <li><b>{ar ? "فحص الأسلاك:" : "Check wiring:"}</b> {ar ? "التأكد من ثبات الكابل الخلفي للوح رقم 2." : "Make sure panel 2 rear cable is firm."} <span className="small muted icon-row"><Cable size={13} /> {ar ? "فحص يدوي سريع" : "Quick manual check"}</span></li>
-        <li><b>{ar ? "الدعم الفني:" : "Technician:"}</b> {ar ? "إذا استمر الانخفاض، أرسل التقرير للشركة." : "If it persists, send the report to the vendor."}</li>
-      </ol>
-      {sprinkle && <p role="status" className="alert-status">{ar ? "جاري تشغيل رشاش الماء الآلي لتنظيف اللوح رقم 2..." : "Running auto sprinklers for panel 2..."}</p>}
-      <button className="button primary" onClick={() => { setTech(true); setSprinkle(false); }}><Wrench size={16} />{ar ? "طلب فني صيانة معتمد للوح رقم 2" : "Request a certified technician for panel 2"}</button>
-      {tech && <p role="status" className="alert-status">{ar ? "تم إرسال التقرير والتشخيص للفني المعتمد." : "Report sent to the certified technician."}</p>}
-    </section>
-
-    <section className="alert-video"><Clapperboard size={22} aria-hidden="true" /><h2>{ar ? "شاهد الفيديو التوضيحي (1:30 دقيقة)" : "Watch the explainer video (1:30)"}</h2><p>{ar ? "خطوة بخطوة: كيف يستجيب النظام وينبه العميل." : "Step by step: how the system responds and alerts you."}</p><small>{ar ? "الفيديو قيد الإنتاج — يُرفع هنا فور جهوزيته." : "Video in production — published here once ready."}</small></section>
+    <p className="alert-saving">💰 {ar ? "وفّرت هذا الشهر 300 ريال صيانة بالتشخيص الذاتي." : "Saved SAR 300 in maintenance this month with self-diagnosis."} <small className="muted">{ar ? "مثال توضيحي." : "Illustrative example."}</small></p>
 
     <section className="alert-devices">
       <div><Smartphone size={20} aria-hidden="true" /><strong>{ar ? "الجوال" : "Mobile"}</strong><small>{ar ? "تنبيهات فورية بالعربي" : "Instant Arabic alerts"}</small></div>

@@ -1,38 +1,21 @@
 "use client";
 
 import { ACTION_META } from "@/types/energy";
-import { LOAD_PRESETS, loadsCapacityW } from "@/lib/energy/scenarios";
 import { useSolar } from "./SolarProvider";
 
-/** Concise live report built only from current simulation values. */
+/** One-card live summary: current state plus the decision, nothing else. */
 export default function ProductionReport() {
-  const { sim, calc, decision, result, lang } = useSolar();
+  const { calc, decision, result, lang } = useSolar();
   const ar = lang === "ar";
   const meta = ACTION_META[decision.recommendedAction];
-  const activeLoads = LOAD_PRESETS.filter((l) => sim.availableLoads.includes(l.id));
-  const localReasonsAr: Record<string, string> = {
-    battery_storage: `يتوفر فائض ${calc.excessEnergyW}W. تعطي القاعدة أولوية لشحن البطارية المتاحة عندما يكون مستواها أقل من 80%.`,
-    ev_charging: `يتوفر فائض ${calc.excessEnergyW}W. بعد شرط البطارية، تقترح القاعدة شحن السيارة المتاحة التي ليست قيد الشحن.`,
-    additional_load: `يتوفر فائض ${calc.excessEnergyW}W. تقترح القاعدة توجيهه للأحمال المتاحة بعد شروط البطارية والسيارة.`,
-    reduce_solar_input: "يتوفر فائض دون بطارية مؤهلة أو سيارة غير مشغولة أو حمل إضافي متاح. التوصية هي تقليل الإنتاج الشمسي.",
-    no_action: "لا يُقترح إجراء إضافي. عند التوازن يتساوى الإنتاج والاستهلاك، فلا يوجد فائض أو عجز.",
-    energy_shortage: `يتجاوز الاستهلاك الإنتاج بمقدار ${calc.energyShortageW}W. لا يوجد فائض لإعادة التوجيه؛ يُقترح تقليل الأحمال غير الأساسية.`,
-  };
-  const rows: [string, string][] = [
-    [ar ? "إنتاج الطاقة" : "Solar production", `${calc.solarProductionW} W`],
-    [ar ? "استهلاك المنزل" : "Home consumption", `${calc.consumptionW} W`],
-    [ar ? "صافي الطاقة" : "Net energy", `${calc.netEnergyW >= 0 ? "+" : ""}${calc.netEnergyW} W`],
-    [ar ? "الفائض المتاح" : "Available surplus", `${calc.excessEnergyW} W`],
-    [ar ? "العجز" : "Shortage", `${calc.energyShortageW} W`],
-    [ar ? "تغطية الاستهلاك" : "Demand coverage", `${calc.selfCoveragePct}%`],
-    [ar ? "البطارية" : "Battery", sim.batteryAvailable ? `${sim.batteryLevelPct}% · ${sim.batteryCapacityWh} Wh` : ar ? "غير متاحة" : "Unavailable"],
-    [ar ? "الأحمال النشطة" : "Active loads", activeLoads.length ? `${activeLoads.length} · ~${loadsCapacityW(sim.availableLoads)} W` : ar ? "لا يوجد" : "None"],
-  ];
+  const statusAr = calc.status === "SURPLUS" ? "فائض" : calc.status === "SHORTAGE" ? "عجز" : "استقرار";
+  const statusEn = calc.status === "SURPLUS" ? "surplus" : calc.status === "SHORTAGE" ? "shortage" : "balanced";
   return <section className="section production-report" aria-label={ar ? "تقرير الإنتاج" : "Production report"}>
-    <div className="section-heading"><h2>{ar ? "تقرير الإنتاج" : "Production report"}</h2><span className="badge">{result ? result.source === "ai" ? (ar ? "ذكاء اصطناعي" : "AI response") : (ar ? "استجابة احتياطية" : "Server fallback") : (ar ? "معاينة محلية" : "Local preview")}</span></div>
-    <dl className="report-grid">{rows.map(([label, value]) => <div key={label}><dt>{label}</dt><dd dir="ltr">{value}</dd></div>)}</dl>
-    {activeLoads.length > 0 && <ul className="report-loads">{activeLoads.map((l) => <li key={l.id}>{ar ? l.ar : l.en} · <span dir="ltr">~{l.watts}W</span></li>)}</ul>}
-    <p className="report-decision" dir="auto"><strong>{ar ? meta.labelAr : meta.labelEn}</strong> — {ar && !result ? (localReasonsAr[decision.recommendedAction] ?? decision.reason) : decision.reason}</p>
-    <p className="small muted">{ar ? "تقرير وصفي للقيم الحالية فقط. لا توجد قياسات حقيقية أو وفورات مثبتة." : "A descriptive summary of current values only. No real measurements or proven savings."}</p>
+    <div className="report-summary">
+      <span className="report-status">{ar ? "حالة الطاقة الآن" : "Current energy state"}: <strong>{ar ? statusAr : statusEn}</strong></span>
+      <strong className="report-decision-name">{ar ? meta.labelAr : meta.labelEn}</strong>
+      <span className="badge">{result ? result.source === "ai" ? (ar ? "ذكاء اصطناعي" : "AI response") : (ar ? "استجابة احتياطية" : "Server fallback") : (ar ? "معاينة محلية" : "Local preview")}</span>
+    </div>
+    <p className="small muted">{ar ? "ملخص القيم الحالية فقط. لا توجد قياسات حقيقية أو وفورات مثبتة." : "Current values only. No real measurements or proven savings."}</p>
   </section>;
 }

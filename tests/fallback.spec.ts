@@ -32,8 +32,8 @@ test("battery zero capacity and unavailable sinks update real UI", async ({ page
   await expect(page.locator(".recommendation h3")).toHaveText("Charge EV");
   await page.getByRole("checkbox", { name: "EV available", exact: true }).uncheck();
   await expect(page.locator(".recommendation h3")).toHaveText("Power Additional Load");
-  await page.getByRole("checkbox", { name: "Water Heater ~1500W" }).uncheck();
-  await page.getByRole("checkbox", { name: "AC ~1800W" }).uncheck();
+  await page.getByRole("checkbox", { name: "☑️ Water Heater (1500 W)" }).uncheck();
+  await page.getByRole("checkbox", { name: "☑️ AC (1800 W)" }).uncheck();
   await expect(page.locator(".recommendation h3")).toHaveText("Reduce Solar Input");
   await expect(page.locator('[data-sink="battery_storage"]')).toHaveAttribute("data-active", "false");
   await expect(page.locator('[data-sink="reduce_solar_input"]')).toHaveAttribute("data-active", "true");

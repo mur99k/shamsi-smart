@@ -7,7 +7,15 @@
 .alert-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 16px; }
 .alert-card { border-radius: 16px; padding: 18px; background: #fff; border: 2px solid var(--border); }
 .alert-card.ok { border-color: #a7f3d0; }
-.alert-card.error { border-color: #fca5a5; background: #fff5f5; animation: alert-pulse 2.4s ease-in-out infinite; }
+.alert-card.error { border-color: #fca5a5; animation: alert-pulse 2.4s ease-in-out infinite; }
+.alert-card.fault { border-color: #047857; background: #fff; box-shadow: 0 12px 30px rgba(4, 120, 87, 0.12); margin-bottom: 14px; }
+.alert-card.fault h2 { font-size: 17px; margin-bottom: 8px; }
+.alert-card.fault p { font-size: 14px; }
+.alert-actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-bottom: 12px; }
+.button.big { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 18px 10px; font-size: 14px; border-radius: 16px; min-height: 96px; }
+.alert-inspect { border-radius: 12px; padding: 12px 16px; background: #f8fafc; border: 1px solid var(--border); font-size: 13.5px; margin-bottom: 12px; }
+.alert-saving { border-radius: 14px; padding: 12px 16px; background: #fff; border: 1px solid #f6d878; font-size: 13.5px; font-weight: 600; margin-bottom: 16px; }
+@media (max-width: 600px) { .alert-actions { grid-template-columns: minmax(0, 1fr); } .button.big { flex-direction: row; min-height: 56px; } }
 @keyframes alert-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.12); } 50% { box-shadow: 0 0 0 6px rgba(220, 38, 38, 0.05); } }
 .alert-diagnostic .button.primary { box-shadow: 0 10px 26px rgba(4, 120, 87, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.22); }
 @media (prefers-reduced-motion: reduce) { .alert-card.error { animation: none; } .button:active { transform: none; } }
@@ -229,6 +237,10 @@ legend { padding: 0 6px; font-size: 14px; }
 .report-loads { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 12px; padding: 0; list-style: none; }
 .report-loads li { border: 1px solid var(--border); border-radius: 4px; padding: 4px 10px; font-size: 12px; background: var(--surface); }
 .report-decision { line-height: 1.9; }
+.report-summary { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; border-radius: 16px; padding: 16px 18px; background: #f8fafc; border: 1px solid var(--border); min-width: 0; }
+.report-status { font-size: 14px; color: var(--muted); }
+.report-status strong { color: var(--accent); }
+.report-decision-name { font-size: 16px; }
 .assistant-grid { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 36px; align-items: start; }
 .chat-workspace { min-width: 0; border: 1px solid var(--border); border-radius: 6px; padding: 20px; }
 .chat-history { height: 390px; overflow-y: auto; scrollbar-color: #aebcb4 #f4f7f5; padding: 14px 10px; overscroll-behavior: contain; }
