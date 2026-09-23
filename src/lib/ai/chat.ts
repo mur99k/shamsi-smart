@@ -158,10 +158,13 @@ function stripMarkdown(text: string): string {
     .replace(/^#{1,6}\s+/gm, "")
     .replace(/\[([^\]]+)\]\(([^)]+)\)/g, "$1");
 }
-/** Deterministic local answer when the AI is unreachable (never crashes). */
+/** Deterministic local answer when the AI is unreachable (never crashes).
+ * It understands the question type so it never parrots one canned reply. */
 function fallbackReply(ctx: ChatContext, calc: { net: number; excess: number; shortage: number; status: string }, weather: LiveWeather | null): string {
   const s = ctx.state;
   const ar = ctx.lang === "ar";
+  const last = ctx.messages.filter(m => m.role === "user").slice(-1)[0]?.content ?? "";
+  const q = last.toLowerCase();
   const where =
     ctx.decision?.recommendedAction === "battery_storage"
       ? ar ? "تخزين الفائض في البطارية" : "storing the surplus in the battery"
@@ -174,14 +177,41 @@ function fallbackReply(ctx: ChatContext, calc: { net: number; excess: number; sh
             : ctx.decision?.recommendedAction === "reduce_solar_input"
               ? ar ? "تقليل الإنتاج الشمسي لعدم وجود وجهة مؤهلة للفائض، دون أمر تحكم فعلي" : "reducing solar input because no eligible surplus sink is available, without a physical control command"
               : ar ? "الحفاظ على الوضع الحالي" : "holding the current state";
+  const summary = ar
+    ? `الفائض ${calc.excess}W والبطارية عند ${s.battery.levelPercent}%، والتوصية: ${where}.`
+    : `Surplus is ${calc.excess}W, battery at ${s.battery.levelPercent}%, recommendation: ${where}.`;
+  // Greetings get a greeting, not a status dump.
+  if (/^(هلا|هلا والله|السلام عليكم|السلام|مرحبا|اهلا|صباح الخير|مساء الخير|هاي|hello|hi|hey|good morning|good evening|how are you|كيف حالك|كيفك|شلونك)[\s!؟?.]*$/.test(q.trim())) {
+    return ar
+      ? `هلا فيك! أنا مساعد SolarWise. ${summary} اسألني عن أي شيء في النظام.`
+      : `Hello! I'm the SolarWise assistant. ${summary} Ask me anything about the system.`;
+  }
+  // Conditional "what if battery full?" gets a conditional answer.
+  if (/(امتلأت|مليانة|متروسة|فل|full|fills up|100%)/.test(q) && /(بطار|battery)/.test(q)) {
+    return ar
+      ? `لو امتلأت البطارية فعلًا، تتحول الأولوية للسيارة الكهربائية ثم للأحمال الإضافية. حاليًا بطاريتك عند ${s.battery.levelPercent}% فقط، لذلك ${where} هو الصحيح الآن.`
+      : `If the battery were actually full, priority would shift to the EV, then extra loads. Yours is only at ${s.battery.levelPercent}%, so ${where} is right for now.`;
+  }
+  // "Why this decision?" gets the reason, not a weather dump.
+  if (/(لماذا|ليش|وش السبب|why|reason)/.test(q)) {
+    return ar
+      ? `لأن ${summary}`
+      : `Because ${summary}`;
+  }
   const tempLine = weather
     ? ar
       ? ` درجة الحرارة الخارجية في ${weather.place} الآن ${weather.tempC}°م (بيانات مدينة، وليست قراءة حساس).`
       : ` Outdoor temperature in ${weather.place} is ${weather.tempC}C right now (city data, not a sensor reading).`
     : "";
+  // Weather questions lead with weather.
+  if (/(حرارة|طقس|مطر|غيم|رطوبة|temp|weather|rain|humid)/.test(q)) {
+    return ar
+      ? `${tempLine.trim()} ${summary}`
+      : `${tempLine.trim()} ${summary}`;
+  }
   return ar
-    ? `حالة النظام الآن: الإنتاج ${s.solarProductionW}W والاستهلاك ${s.consumptionW}W، والصافي ${calc.net >= 0 ? "+" : ""}${calc.net}W (${calc.status}). البطارية عند ${s.battery.levelPercent}%. التوصية الحالية: ${where}.${tempLine}`
-    : `Current state: production ${s.solarProductionW}W, consumption ${s.consumptionW}W, net ${calc.net >= 0 ? "+" : ""}${calc.net}W (${calc.status}). Battery at ${s.battery.levelPercent}%. Current recommendation: ${where}.${tempLine}`;
+    ? `حالة النظام الآن: الإنتاج ${s.solarProductionW}W والاستهلاك ${s.consumptionW}W، والصافي ${calc.net >= 0 ? "+" : ""}${calc.net}W (${calc.status}). البطارية عند ${s.battery.levelPercent}%. التوصية الحالية: ${where}.`
+    : `Current state: production ${s.solarProductionW}W, consumption ${s.consumptionW}W, net ${calc.net >= 0 ? "+" : ""}${calc.net}W (${calc.status}). Battery at ${s.battery.levelPercent}%. Current recommendation: ${where}.`;
 }
 
 export async function chatReply(ctx: ChatContext): Promise<{
