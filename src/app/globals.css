@@ -11,15 +11,17 @@
 @keyframes alert-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.12); } 50% { box-shadow: 0 0 0 6px rgba(220, 38, 38, 0.05); } }
 .alert-diagnostic .button.primary { box-shadow: 0 10px 26px rgba(4, 120, 87, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.22); }
 @media (prefers-reduced-motion: reduce) { .alert-card.error { animation: none; } .button:active { transform: none; } }
-.alert-card h2 { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 15px; margin-bottom: 8px; }
-.alert-card p { font-size: 13px; color: var(--muted); }
-.alert-tag { font-size: 11.5px; font-weight: 700; border-radius: 8px; padding: 4px 10px; white-space: nowrap; }
+.alert-card h2 { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; font-size: 16px; margin-bottom: 10px; }
+.alert-card p { font-size: 13.5px; color: var(--muted); }
+.alert-tag { font-size: 12px; font-weight: 700; border-radius: 8px; padding: 5px 12px; white-space: nowrap; flex-shrink: 0; }
 .alert-tag.ok { background: #d1fae5; color: #047857; }
 .alert-tag.warn { background: #fef3c7; color: #b45309; }
 .alert-diagnostic { border-radius: 16px; padding: 22px; background: #fff; border: 2px solid #fee2e2; margin-bottom: 16px; }
 .alert-diagnostic h2 { display: flex; align-items: center; gap: 8px; color: #dc2626; font-size: 17px; margin-bottom: 8px; }
 .alert-diagnostic ol { display: grid; gap: 10px; margin: 14px 0; padding: 0; list-style: none; }
-.alert-diagnostic ol li { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; background: var(--surface); border-radius: 12px; padding: 12px 14px; font-size: 13.5px; }
+.alert-diagnostic ol li { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; background: var(--surface); border-radius: 12px; padding: 14px 16px; font-size: 14px; }
+.alert-diagnostic ol li .button { margin-inline-start: auto; }
+.icon-row { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
 .alert-status { border-radius: 10px; padding: 10px 14px; background: #e2f2e7; color: #205c3e; font-size: 13px; font-weight: 600; margin: 10px 0; }
 .alert-diagnostic .button.primary { width: 100%; justify-content: center; }
 .alert-video { border-radius: 16px; padding: 22px; background: #0f172a; color: #fff; text-align: center; display: grid; gap: 8px; justify-items: center; margin-bottom: 16px; }

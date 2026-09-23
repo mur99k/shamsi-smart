@@ -11,7 +11,7 @@ export default function AlertsPage() {
   const [tech, setTech] = useState(false);
 
   return <>
-    <div className="page-heading"><div><h1>{ar ? "نظام التشخيص والتنبيهات الذكية" : "Smart Fault Diagnostics & Alerts"}</h1><p>{ar ? "طبلون تحكم مبسط — هل النظام يعمل بكفاءة؟ وأين المشكلة؟" : "A simple dashboard — is the system healthy, and where is the fault?"}</p></div><span className="badge">🔋 SolarWise</span></div>
+    <div className="page-heading"><div><h1>{ar ? "نظام التشخيص والتنبيهات الذكية" : "Smart Fault Diagnostics & Alerts"}</h1><p>{ar ? "مراقبة فورية وتأكيد سلامة الألواح الشمسية" : "Real-time monitoring and solar panel safety assurance"}</p></div><span className="badge">🔋 SolarWise</span></div>
 
     <div className="alert-alexa"><span aria-hidden="true">🎙️</span>{ar ? "جاهز للربط الصوتي مستقبلًا مع Alexa — «أليكسا، كيف حالة الطاقة الشمسية؟»" : "Voice-ready for future Alexa link — “Alexa, how is my solar doing?”"}</div>
 
@@ -31,7 +31,7 @@ export default function AlertsPage() {
       <p className="muted">{ar ? "المتوقع" : "Expected"}: <b dir="ltr">100W</b> · {ar ? "الفعلي" : "Actual"}: <b dir="ltr">22W</b></p>
       <ol>
         <li><b>{ar ? "تنظيف اللوح:" : "Clean the panel:"}</b> {ar ? "مسح الغبار عن اللوح رقم 2." : "Wipe dust off panel 2."} <button className="button" onClick={() => { setSprinkle(true); setTech(false); }}><Droplets size={15} />{ar ? "تشغيل رشاش الماء الآلي" : "Run auto sprinklers"}</button></li>
-        <li><b>{ar ? "فحص الأسلاك:" : "Check wiring:"}</b> {ar ? "التأكد من ثبات الكابل الخلفي للوح رقم 2." : "Make sure panel 2 rear cable is firm."} <span className="small muted"><Cable size={13} /> {ar ? "فحص يدوي سريع" : "Quick manual check"}</span></li>
+        <li><b>{ar ? "فحص الأسلاك:" : "Check wiring:"}</b> {ar ? "التأكد من ثبات الكابل الخلفي للوح رقم 2." : "Make sure panel 2 rear cable is firm."} <span className="small muted icon-row"><Cable size={13} /> {ar ? "فحص يدوي سريع" : "Quick manual check"}</span></li>
         <li><b>{ar ? "الدعم الفني:" : "Technician:"}</b> {ar ? "إذا استمر الانخفاض، أرسل التقرير للشركة." : "If it persists, send the report to the vendor."}</li>
       </ol>
       {sprinkle && <p role="status" className="alert-status">{ar ? "جاري تشغيل رشاش الماء الآلي لتنظيف اللوح رقم 2..." : "Running auto sprinklers for panel 2..."}</p>}
