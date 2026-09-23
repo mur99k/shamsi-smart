@@ -28,7 +28,7 @@ for (const item of cases) {
 test("battery zero capacity and unavailable sinks update real UI", async ({ page }) => {
   await page.goto("/simulator");
   await page.getByRole("button", { name: "Switch to English" }).click();
-  await page.getByRole("spinbutton", { name: "Battery capacity exact value" }).fill("0");
+  await page.getByRole("textbox", { name: "Battery capacity exact value" }).fill("0");
   await expect(page.locator(".recommendation h3")).toHaveText("Charge EV");
   await page.getByRole("checkbox", { name: "EV available", exact: true }).uncheck();
   await expect(page.locator(".recommendation h3")).toHaveText("Power Additional Load");

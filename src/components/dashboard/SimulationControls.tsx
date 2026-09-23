@@ -9,11 +9,11 @@ export function Slider({ label, value, min, max, step, unit, onChange }: {
 }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState("");
-  return <div className="control-row"><div className="control-label"><span>{label}</span><label className="numeric-field" dir="ltr"><input lang="en" aria-label={`${label} exact value`} type="number" min={min} max={max} step={1} value={editing ? draft : value}
+  return <div className="control-row"><div className="control-label"><span>{label}</span><label className="numeric-field" dir="ltr"><input lang="en" aria-label={`${label} exact value`} type="text" inputMode="numeric" value={editing ? draft : String(value)}
     onFocus={() => { setEditing(true); setDraft(String(value)); }}
     onChange={event => {
-      const raw = event.target.value;
-      setDraft(raw);
+      const raw = event.target.value.replace(/[^0-9]/g, "");
+      setDraft(event.target.value);
       if (raw !== "" && Number.isFinite(Number(raw))) onChange(Math.min(max, Math.max(min, Math.round(Number(raw)))));
     }}
     onBlur={() => setEditing(false)} onKeyDown={event => { if (event.key === "Enter") event.currentTarget.blur(); }} /><span>{unit}</span></label></div>

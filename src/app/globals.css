@@ -224,7 +224,7 @@ progress::-webkit-progress-value { background: var(--accent); border-radius: 4px
 .numeric-field { display: flex; align-items: center; gap: 5px; }
 .numeric-field input { width: 88px; padding: 4px 6px; text-align: end; }
 .numeric-field span { width: 24px; color: var(--muted); font-size: 12px; }
-input[type="number"], input[type="time"], textarea { border: 1px solid #aebcb4; background: white; border-radius: 4px; color: var(--ink); }
+input[type="time"], textarea, .numeric-field input[type="text"] { border: 1px solid #aebcb4; background: white; border-radius: 4px; color: var(--ink); }
 input[type="range"] { width: 100%; accent-color: var(--accent); height: 22px; cursor: pointer; }
 input[type="checkbox"], input[type="radio"] { accent-color: var(--accent); width: 17px; height: 17px; flex-shrink: 0; }
 .time-field { display: flex; justify-content: space-between; gap: 10px; align-items: center; margin-top: 24px; }

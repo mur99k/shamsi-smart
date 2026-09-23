@@ -15,7 +15,7 @@ async function english(page: Page, path = "/simulator") {
 
 test("50W is immediate; shared state, decision and language survive navigation", async ({ page }) => {
   await english(page);
-  const input = page.getByRole("spinbutton", { name: "Solar production exact value" });
+  const input = page.getByRole("textbox", { name: "Solar production exact value" });
   await input.fill("50");
   await expect(page.getByRole("slider", { name: "Solar production", exact: true })).toHaveValue("50");
   await expect(page.locator(".metrics")).toContainText("-250");
@@ -53,7 +53,7 @@ test("late analysis cannot replace a new simulation state", async ({ page }) => 
   await english(page);
   await page.getByRole("button", { name: "Analyze state", exact: true }).first().click();
   await expect.poll(() => requested).toBe(true);
-  await page.getByRole("spinbutton", { name: "Solar production exact value" }).fill("50");
+  await page.getByRole("textbox", { name: "Solar production exact value" }).fill("50");
   release();
   await expect(page.locator(".recommendation")).toContainText("Energy Shortage");
   await expect(page.getByText("OLD RESPONSE MUST NOT APPEAR")).toHaveCount(0);
@@ -69,7 +69,7 @@ test("validated decision persists during navigation and is invalidated by an edi
   await expect(page.locator(".system-context")).toContainText("Charge EV");
   await page.getByRole("navigation").getByRole("link", { name: "Simulator", exact: true }).click();
   await expect(page.getByText("Validated current snapshot", { exact: true })).toBeVisible();
-  await page.getByRole("spinbutton", { name: "Solar production exact value" }).fill("50");
+  await page.getByRole("textbox", { name: "Solar production exact value" }).fill("50");
   await expect(page.getByText("Validated current snapshot", { exact: true })).toHaveCount(0);
   await expect(page.locator(".recommendation")).toContainText("Local preview");
 });
@@ -77,8 +77,8 @@ test("validated decision persists during navigation and is invalidated by an edi
 test("scenarios synchronize exact inputs; balanced and shortage never route surplus", async ({ page }) => {
   await english(page);
   await page.getByRole("radio", { name: /^Balanced/ }).check();
-  await expect(page.getByRole("spinbutton", { name: "Solar production exact value" })).toHaveValue("500");
-  await expect(page.getByRole("spinbutton", { name: "Consumption exact value" })).toHaveValue("500");
+  await expect(page.getByRole("textbox", { name: "Solar production exact value" })).toHaveValue("500");
+  await expect(page.getByRole("textbox", { name: "Consumption exact value" })).toHaveValue("500");
   await expect(page.locator('[data-sink][data-active="true"]')).toHaveCount(0);
   await expect(page.locator(".balance-totals")).toHaveText(/Available surplus0 WUncovered shortage0 W/);
   await expect(page.locator(".recommendation h3")).toHaveText("No Action");
@@ -184,7 +184,7 @@ test("home is a gateway; overview reads shared state and links to simulator edit
   await expect(page.locator(".recommendation")).toHaveCount(0);
   await page.getByRole("link", { name: "View overview" }).click();
   await expect(page).toHaveURL("/dashboard");
-  await expect(page.getByRole("spinbutton")).toHaveCount(0);
+  await expect(page.getByRole("textbox")).toHaveCount(0);
   await expect(page.locator('[data-flow="surplus"]')).toHaveAttribute("data-running", "true");
   await page.getByRole("button", { name: "Pause motion" }).click();
   await expect(page.locator('[data-flow="surplus"]')).toHaveCSS("animation-play-state", "paused");
@@ -198,20 +198,20 @@ test("home is a gateway; overview reads shared state and links to simulator edit
   await expect(page.locator('[data-flow="surplus"]')).toHaveAttribute("data-running", "false");
   await expect(page.locator('[data-sink][data-active="true"]')).toHaveCount(0);
   await page.getByRole("radio", { name: /^High Surplus/ }).check();
-  await page.getByRole("spinbutton", { name: "Solar production exact value" }).fill("50");
+  await page.getByRole("textbox", { name: "Solar production exact value" }).fill("50");
   await expect(page.locator(".metrics")).toContainText("-250");
   await expect(page.locator('[data-flow="surplus"]')).toHaveAttribute("data-running", "false");
-  await page.getByRole("spinbutton", { name: "Solar production exact value" }).fill("0");
+  await page.getByRole("textbox", { name: "Solar production exact value" }).fill("0");
   await expect(page.locator('[data-flow="home"]')).toHaveAttribute("data-running", "false");
-  await page.getByRole("spinbutton", { name: "Solar production exact value" }).fill("50");
-  await page.getByRole("spinbutton", { name: "Consumption exact value" }).fill("125");
-  await expect(page.getByRole("spinbutton", { name: "Solar production exact value" })).toHaveValue("50");
+  await page.getByRole("textbox", { name: "Solar production exact value" }).fill("50");
+  await page.getByRole("textbox", { name: "Consumption exact value" }).fill("125");
+  await expect(page.getByRole("textbox", { name: "Solar production exact value" })).toHaveValue("50");
   await page.getByRole("navigation").getByRole("link", { name: "Overview", exact: true }).click();
   await expect(page.locator(".metrics")).toContainText("-75");
-  await expect(page.getByRole("spinbutton")).toHaveCount(0);
+  await expect(page.getByRole("textbox")).toHaveCount(0);
   await page.getByRole("link", { name: "Edit in simulator" }).click();
-  await expect(page.getByRole("spinbutton", { name: "Solar production exact value" })).toHaveValue("50");
-  await expect(page.getByRole("spinbutton", { name: "Consumption exact value" })).toHaveValue("125");
+  await expect(page.getByRole("textbox", { name: "Solar production exact value" })).toHaveValue("50");
+  await expect(page.getByRole("textbox", { name: "Consumption exact value" })).toHaveValue("125");
   await page.getByRole("navigation").getByRole("link", { name: "Overview", exact: true }).click();
   await page.getByText("How are these numbers calculated?", { exact: true }).click();
   await expect(page.getByText(/Net power is generation minus consumption/)).toBeVisible();
