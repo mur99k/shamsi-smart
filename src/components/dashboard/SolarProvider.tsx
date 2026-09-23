@@ -180,6 +180,8 @@ function useSolarState() {
   async function send(text: string) {
     const content = text.trim().slice(0, 1000);
     if (!content || chatRequest.current) return;
+    // Reply in the language the user actually wrote (Arabic script → ar).
+    const msgLang: Lang = /[؀-ۿ]/.test(content) ? "ar" : "en";
     const controller = new AbortController();
     chatRequest.current = controller;
     const state = buildDecisionRequest(sim);
@@ -192,7 +194,7 @@ function useSolarState() {
     try {
       const response = await fetch("/api/ai/chat", {
         method: "POST", headers: { "Content-Type": "application/json" }, signal: controller.signal,
-        body: JSON.stringify({ state, decision: { recommendedAction: decision.recommendedAction, reason: decision.reason }, lang,
+        body: JSON.stringify({ state, decision: { recommendedAction: decision.recommendedAction, reason: decision.reason }, lang: msgLang,
           // API accepts at most 10 messages, each at most 1000 characters.
           messages: next.filter(message => !message.error).slice(-9).map(({ role, content: value }) => ({ role, content: value.slice(0, 1000) })),
         }),
@@ -201,7 +203,7 @@ function useSolarState() {
       if (!response.ok || !data?.success || typeof data.reply !== "string") throw new Error("Chat unavailable");
       setMessages([...next, { role: "assistant", content: data.reply, source: data.source === "ai" ? "ai" : "fallback", snapshot, decision: decision.recommendedAction }].slice(-40) as Message[]);
     } catch {
-      setMessages([...next, { role: "assistant", content: lang === "ar" ? "تعذر الحصول على رد. أعد إرسال سؤالك للمحاولة مجدداً." : "Could not get a reply. Send your question again to retry.", snapshot, error: true }].slice(-40) as Message[]);
+      setMessages([...next, { role: "assistant", content: msgLang === "ar" ? "لم يصلني رد. أعد إرسال سؤالك وسأجيبك فورًا." : "Could not get a reply. Send your question again to retry.", snapshot, error: true }].slice(-40) as Message[]);
     } finally {
       clearTimeout(timer);
       chatRequest.current = null;

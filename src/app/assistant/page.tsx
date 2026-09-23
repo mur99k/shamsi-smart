@@ -8,7 +8,7 @@ import { useSolar } from "@/components/dashboard/SolarProvider";
 import AIChat from "@/components/dashboard/AIChat";
 
 export default function AssistantPage() {
-  const { sim, calc, lang, decision, result } = useSolar();
+  const { sim, calc, lang, decision } = useSolar();
   const ar = lang === "ar";
   const [contextOpen, setContextOpen] = useState(true);
   useEffect(() => {
@@ -35,6 +35,6 @@ export default function AssistantPage() {
   ];
   return <>
     <div className="page-heading"><div><h1>{ar ? "مساعد الطاقة" : "Energy Assistant"}</h1><p>{ar ? "نقاش مبني على حالة المحاكاة الحالية." : "A conversation grounded in the current simulation state."}</p></div></div>
-    <div className="assistant-grid"><AIChat /><aside className="system-context"><div className="section-heading"><h2>{ar ? "السياق الحالي" : "Current context"}</h2><div className="context-actions"><button className="context-toggle" aria-expanded={contextOpen} onClick={() => setContextOpen(open => !open)}>{contextOpen ? <ChevronDown size={18} className="flipped" /> : <ChevronDown size={18} />}{ar ? "السياق" : "Context"}</button><Link href="/simulator">{ar ? "تعديل" : "Edit"}</Link></div></div><div className="context-body" hidden={!contextOpen}><div className="assistant-state-label">{calc.status}</div><dl>{rows.map(([label, value]) => <div key={label}><dt>{label}</dt><dd><bdi>{value}</bdi></dd></div>)}</dl><h3>{ar ? "القرار الحالي" : "Current decision"}</h3><p className="decision-name">{ar ? meta.labelAr : meta.labelEn}</p><span className="badge">{result?.source === "ai" ? "Codex Everywhere" : ar ? "محرك محلي" : "Local engine"}</span><p className="small muted">{ar ? "الأرقام محاكاة وليست قراءات حساسات." : "These are simulated values, not sensor readings."}</p></div></aside></div>
+    <div className="assistant-grid"><AIChat /><aside className="system-context"><div className="section-heading"><h2>{ar ? "السياق الحالي" : "Current context"}</h2><div className="context-actions"><button className="context-toggle" aria-expanded={contextOpen} onClick={() => setContextOpen(open => !open)}>{contextOpen ? <ChevronDown size={18} className="flipped" /> : <ChevronDown size={18} />}{ar ? "السياق" : "Context"}</button><Link href="/simulator">{ar ? "تعديل" : "Edit"}</Link></div></div><div className="context-body" hidden={!contextOpen}><div className="assistant-state-label">{calc.status}</div><dl>{rows.map(([label, value]) => <div key={label}><dt>{label}</dt><dd><bdi>{value}</bdi></dd></div>)}</dl><h3>{ar ? "القرار الحالي" : "Current decision"}</h3><p className="decision-name">{ar ? meta.labelAr : meta.labelEn}</p><p className="small muted">{ar ? "الأرقام محاكاة وليست قراءات حساسات." : "These are simulated values, not sensor readings."}</p></div></aside></div>
   </>;
 }
