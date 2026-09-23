@@ -207,6 +207,7 @@ progress::-webkit-progress-value { background: var(--accent); border-radius: 4px
 .numeric-field input:focus { outline: none; border-color: #047857; box-shadow: 0 0 0 3px rgba(4, 120, 87, 0.18); }
 .sim-inputs fieldset { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; padding: 1rem; }
 .sim-inputs fieldset > legend, .sim-inputs fieldset > p { grid-column: 1 / -1; }
+.sim-inputs fieldset > p { margin: 4px 10px 6px; }
 .check-row { display: flex; align-items: center; gap: 10px; border-radius: 12px; padding: 12px; background: #f8fafc; border: 1px solid var(--border); font-size: 13.5px; min-width: 0; min-height: 52px; overflow: hidden; }
 .check-row input { flex: none; width: 20px; height: 20px; accent-color: #047857; }
 .check-row span { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 600; }
