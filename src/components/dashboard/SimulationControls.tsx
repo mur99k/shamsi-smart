@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 import { LOAD_PRESETS, type SimState } from "@/lib/energy/scenarios";
 import type { Lang } from "./lang";
 
@@ -17,7 +17,7 @@ export function Slider({ label, value, min, max, step, unit, onChange }: {
       if (raw !== "" && Number.isFinite(Number(raw))) onChange(Math.min(max, Math.max(min, Math.round(Number(raw)))));
     }}
     onBlur={() => setEditing(false)} onKeyDown={event => { if (event.key === "Enter") event.currentTarget.blur(); }} /><span>{unit}</span></label></div>
-    <input aria-label={label} type="range" min={min} max={max} step={step} value={value} onChange={event => { setEditing(false); onChange(Number(event.target.value)); }} />
+    <input aria-label={label} type="range" min={min} max={max} step={step} value={value} style={{ "--fill": `${max > min ? Math.round(((value - min) / (max - min)) * 100) : 0}%` } as CSSProperties} onChange={event => { setEditing(false); onChange(Number(event.target.value)); }} />
   </div>;
 }
 

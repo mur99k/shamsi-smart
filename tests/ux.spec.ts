@@ -167,7 +167,7 @@ test("all routes render in AR/EN at desktop and mobile without page overflow", a
         }
         await expect(page.locator("h1")).toBeVisible();
         expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
-        if (route === "/hardware") await expect(page.locator("main")).toContainText("Raspberry Pi");
+        if (route === "/hardware") await expect(page.locator("main")).toContainText("ESP32");
         if (route === "/") await expect(page.locator(".landing-hero-clean")).toBeVisible();
         if (route === "/" || route === "/dashboard" || route === "/simulator") await page.screenshot({ path: `artifacts/gateway-${width}-${lang}-${route === "/" ? "home" : route.slice(1)}.png`, fullPage: true });
       }

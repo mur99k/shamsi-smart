@@ -2,7 +2,7 @@
 
 import { Fragment } from "react";
 import Link from "next/link";
-import { Activity, Gauge, PlugZap, Sun, Cpu, BatteryCharging, ArrowLeft, ArrowRight, ArrowDown, Zap } from "lucide-react";
+import { Activity, Gauge, PlugZap, Sun, Cpu, BatteryCharging, ArrowLeft, ArrowRight, ArrowDown, Zap, Plug } from "lucide-react";
 import { ACTION_META } from "@/types/energy";
 import { useSolar } from "@/components/dashboard/SolarProvider";
 
@@ -44,10 +44,10 @@ export default function Home() {
           <span className="live-pulse" aria-hidden="true"><Zap size={13} /></span>
           <h2>{ar ? "حالة النظام الآن" : "Live system state"}</h2>
           <p className={`live-source ${liveFresh ? "is-live" : ""}`} role="status">{liveFresh ? (ar ? "مباشر من ESP32 🟢" : "Live from ESP32 🟢") : (ar ? "محاكاة افتراضية" : "Simulated values")}</p>
-          <dl>
-            <div><dt>{ar ? "الإنتاج" : "Solar"}</dt><dd dir="ltr" className="num">{showSolar} W</dd></div>
-            <div><dt>{ar ? "الاستهلاك" : "Load"}</dt><dd dir="ltr" className="num">{showLoad} W</dd></div>
-            <div><dt>{ar ? "البطارية" : "Battery"}</dt><dd dir="ltr" className="num">{showBatt}</dd></div>
+          <dl className="live-rows">
+            <div><dt><Sun size={15} aria-hidden="true" />{ar ? "الإنتاج" : "Solar"}</dt><dd dir="ltr" className="num">{showSolar} W</dd></div>
+            <div><dt><Plug size={15} aria-hidden="true" />{ar ? "الاستهلاك" : "Load"}</dt><dd dir="ltr" className="num">{showLoad} W</dd></div>
+            <div><dt><BatteryCharging size={15} aria-hidden="true" />{ar ? "البطارية" : "Battery"}</dt><dd dir="ltr" className="num">{showBatt}</dd></div>
           </dl>
           <p className="live-decision">{ar ? action.labelAr : action.labelEn}</p>
           <Link className="button primary" href="/simulator">{ar ? "افتح المحاكي" : "Open simulator"}</Link>
