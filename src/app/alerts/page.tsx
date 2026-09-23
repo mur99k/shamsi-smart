@@ -9,8 +9,18 @@ export default function AlertsPage() {
   const ar = lang === "ar";
   const [sprinkle, setSprinkle] = useState(false);
   const [tech, setTech] = useState(false);
+  const [autoWash, setAutoWash] = useState(false);
+  const [washed, setWashed] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
+
+  const runWash = () => {
+    setSprinkle(true); setTech(false); setWashed(true);
+    setToast(ar ? "بدأ رش الماء على اللوح رقم 2 — جارٍ تحديث حالته..." : "Sprinklers started on panel 2 — updating its status...");
+    window.setTimeout(() => setToast(null), 3500);
+  };
 
   return <>
+    {toast && <div role="status" className="alert-toast">{toast}</div>}
     <div className="page-heading"><div><h1>{ar ? "نظام التشخيص والتنبيهات الذكية" : "Smart Fault Diagnostics & Alerts"}</h1><p>{ar ? "مراقبة فورية وتأكيد سلامة الألواح الشمسية" : "Real-time monitoring and solar panel safety assurance"}</p></div><span className="badge">🔋 SolarWise</span></div>
 
     <div className="alert-alexa"><span aria-hidden="true">🎙️</span>{ar ? "جاهز للربط الصوتي مستقبلًا مع Alexa — «أليكسا، كيف حالة الطاقة الشمسية؟»" : "Voice-ready for future Alexa link — “Alexa, how is my solar doing?”"}</div>
@@ -20,17 +30,28 @@ export default function AlertsPage() {
         <h2>{ar ? "اللوح رقم 1" : "Panel 1"} <span className="alert-tag ok" dir="ltr">98W · {ar ? "ممتاز" : "Excellent"}</span></h2>
         <p>{ar ? "يعمل بالطاقة الإنتاجية الكاملة دون ظلال." : "Running at full output with no shading."}</p>
       </article>
-      <article className="alert-card error">
-        <h2>{ar ? "اللوح رقم 2" : "Panel 2"} <span className="alert-tag warn" dir="ltr">22W · {ar ? "انخفاض" : "Low"}</span></h2>
-        <p>{ar ? "تنبيه: أداء منخفض جدًا يتطلب التدخل." : "Alert: very low output, action needed."}</p>
+      <article className={`alert-card ${washed ? "ok" : "error"}`}>
+        <h2>{ar ? "اللوح رقم 2" : "Panel 2"} <span className={`alert-tag ${washed ? "ok" : "warn"}`} dir="ltr">{washed ? (ar ? "ممتاز بعد الغسيل ✨" : "Excellent after wash ✨") : "22W · " + (ar ? "انخفاض" : "Low")}</span></h2>
+        <p>{washed ? (ar ? "عاد للإنتاج الكامل بعد التنظيف." : "Back to full output after cleaning.") : (ar ? "تنبيه: أداء منخفض جدًا يتطلب التدخل." : "Alert: very low output, action needed.")}</p>
       </article>
     </div>
+
+    <div className="alert-wash-row">
+      <button role="switch" aria-checked={autoWash} onClick={() => setAutoWash(v => !v)} className={`wash-switch ${autoWash ? "on" : ""}`}><span className="wash-knob" aria-hidden="true" /></button>
+      <span>{ar ? "تفعيل الغسيل الآلي عند تراكم الغبار وتراجع الأداء" : "Enable auto-wash when dust builds up and output drops"}</span>
+    </div>
+
+    <article className="alert-card savings">
+      <h2>💰 {ar ? "وفّرت هذا الشهر 300 ريال" : "Saved SAR 300 this month"}</h2>
+      <p>{ar ? "تكاليف صيانة بفضل التشخيص الذاتي والغسيل الآلي." : "In maintenance costs thanks to self-diagnosis and auto-wash."}</p>
+      <small className="muted">{ar ? "مثال توضيحي — ليس قياسًا فعليًا." : "Illustrative example — not a real measurement."}</small>
+    </article>
 
     <section className="alert-diagnostic">
       <h2><Siren size={20} aria-hidden="true" />{ar ? "تم اكتشاف انخفاض كفاءة في [اللوح رقم 2]" : "Efficiency drop detected in [Panel 2]"}</h2>
       <p className="muted">{ar ? "المتوقع" : "Expected"}: <b dir="ltr">100W</b> · {ar ? "الفعلي" : "Actual"}: <b dir="ltr">22W</b></p>
       <ol>
-        <li><b>{ar ? "تنظيف اللوح:" : "Clean the panel:"}</b> {ar ? "مسح الغبار عن اللوح رقم 2." : "Wipe dust off panel 2."} <button className="button" onClick={() => { setSprinkle(true); setTech(false); }}><Droplets size={15} />{ar ? "تشغيل رشاش الماء الآلي" : "Run auto sprinklers"}</button></li>
+        <li><b>{ar ? "تنظيف اللوح:" : "Clean the panel:"}</b> {ar ? "مسح الغبار عن اللوح رقم 2." : "Wipe dust off panel 2."} <button className="button" onClick={runWash}><Droplets size={15} />{ar ? "تشغيل رشاش الماء الآلي" : "Run auto sprinklers"}</button></li>
         <li><b>{ar ? "فحص الأسلاك:" : "Check wiring:"}</b> {ar ? "التأكد من ثبات الكابل الخلفي للوح رقم 2." : "Make sure panel 2 rear cable is firm."} <span className="small muted icon-row"><Cable size={13} /> {ar ? "فحص يدوي سريع" : "Quick manual check"}</span></li>
         <li><b>{ar ? "الدعم الفني:" : "Technician:"}</b> {ar ? "إذا استمر الانخفاض، أرسل التقرير للشركة." : "If it persists, send the report to the vendor."}</li>
       </ol>
