@@ -10,6 +10,14 @@ export default function ProductionReport() {
   const ar = lang === "ar";
   const meta = ACTION_META[decision.recommendedAction];
   const activeLoads = LOAD_PRESETS.filter((l) => sim.availableLoads.includes(l.id));
+  const localReasonsAr: Record<string, string> = {
+    battery_storage: `يتوفر فائض ${calc.excessEnergyW}W. تعطي القاعدة أولوية لشحن البطارية المتاحة عندما يكون مستواها أقل من 80%.`,
+    ev_charging: `يتوفر فائض ${calc.excessEnergyW}W. بعد شرط البطارية، تقترح القاعدة شحن السيارة المتاحة التي ليست قيد الشحن.`,
+    additional_load: `يتوفر فائض ${calc.excessEnergyW}W. تقترح القاعدة توجيهه للأحمال المتاحة بعد شروط البطارية والسيارة.`,
+    reduce_solar_input: "يتوفر فائض دون بطارية مؤهلة أو سيارة غير مشغولة أو حمل إضافي متاح. التوصية هي تقليل الإنتاج الشمسي.",
+    no_action: "لا يُقترح إجراء إضافي. عند التوازن يتساوى الإنتاج والاستهلاك، فلا يوجد فائض أو عجز.",
+    energy_shortage: `يتجاوز الاستهلاك الإنتاج بمقدار ${calc.energyShortageW}W. لا يوجد فائض لإعادة التوجيه؛ يُقترح تقليل الأحمال غير الأساسية.`,
+  };
   const rows: [string, string][] = [
     [ar ? "إنتاج الطاقة" : "Solar production", `${calc.solarProductionW} W`],
     [ar ? "استهلاك المنزل" : "Home consumption", `${calc.consumptionW} W`],
@@ -24,7 +32,7 @@ export default function ProductionReport() {
     <div className="section-heading"><h2>{ar ? "تقرير الإنتاج" : "Production report"}</h2><span className="badge">{result ? result.source === "ai" ? (ar ? "ذكاء اصطناعي" : "AI response") : (ar ? "استجابة احتياطية" : "Server fallback") : (ar ? "معاينة محلية" : "Local preview")}</span></div>
     <dl className="report-grid">{rows.map(([label, value]) => <div key={label}><dt>{label}</dt><dd dir="ltr">{value}</dd></div>)}</dl>
     {activeLoads.length > 0 && <ul className="report-loads">{activeLoads.map((l) => <li key={l.id}>{ar ? l.ar : l.en} · <span dir="ltr">~{l.watts}W</span></li>)}</ul>}
-    <p className="report-decision" dir="auto"><strong>{ar ? meta.labelAr : meta.labelEn}</strong> — {decision.reason}</p>
+    <p className="report-decision" dir="auto"><strong>{ar ? meta.labelAr : meta.labelEn}</strong> — {ar && !result ? (localReasonsAr[decision.recommendedAction] ?? decision.reason) : decision.reason}</p>
     <p className="small muted">{ar ? "تقرير وصفي للقيم الحالية فقط. لا توجد قياسات حقيقية أو وفورات مثبتة." : "A descriptive summary of current values only. No real measurements or proven savings."}</p>
   </section>;
 }

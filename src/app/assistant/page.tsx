@@ -19,19 +19,27 @@ export default function AssistantPage() {
     return () => mq.removeEventListener("change", sync);
   }, []);
   const meta = ACTION_META[decision.recommendedAction];
+  const formatTimeAr = (t: string) => {
+    const m = /^(\d{1,2}):(\d{2})/.exec(t);
+    if (!m) return t;
+    const h = Number(m[1]);
+    const suffix = h < 12 ? "ص" : "م";
+    const h12 = h % 12 === 0 ? 12 : h % 12;
+    return `${h12}:${m[2]} ${suffix}`;
+  };
   const rows = [
     [ar ? "الإنتاج الشمسي" : "Solar production", ar ? `${sim.solarProductionW} واط` : `${sim.solarProductionW} W`],
     [ar ? "الاستهلاك" : "Consumption", ar ? `${sim.consumptionW} واط` : `${sim.consumptionW} W`],
     [ar ? "الصافي" : "Net power", ar ? `${calc.netEnergyW} واط` : `${calc.netEnergyW} W`],
     [ar ? "الفائض" : "Surplus", ar ? `${calc.excessEnergyW} واط` : `${calc.excessEnergyW} W`],
     [ar ? "العجز" : "Shortage", ar ? `${calc.energyShortageW} واط` : `${calc.energyShortageW} W`],
-    [ar ? "سعة البطارية" : "Battery level", ar ? `${sim.batteryLevelPct}% (من أصل ${sim.batteryCapacityWh} واط/ساعة)` : `${sim.batteryLevelPct}% (of ${sim.batteryCapacityWh} Wh)`],
+    [ar ? "سعة البطارية" : "Battery level", `${sim.batteryLevelPct}% (${sim.batteryCapacityWh} Wh)`],
     [ar ? "البطارية متصلة" : "Battery connected", sim.batteryAvailable ? (ar ? "نعم" : "Yes") : (ar ? "لا" : "No")],
     [ar ? "السيارة متاحة" : "EV available", sim.evAvailable ? (ar ? "نعم" : "Yes") : (ar ? "لا" : "No")],
     [ar ? "السيارة قيد الشحن" : "EV charging", sim.evAvailable && sim.evCharging ? (ar ? "نعم" : "Yes") : (ar ? "لا" : "No")],
     [ar ? "عدد الأحمال" : "Available loads", String(sim.availableLoads.length)],
     [ar ? "توقع الإنتاج" : "Solar forecast", ar ? `${sim.futureSolarEstimateW} واط` : `${sim.futureSolarEstimateW} W`],
-    [ar ? "وقت المحاكاة" : "Simulation time", sim.currentTime],
+    [ar ? "وقت المحاكاة" : "Simulation time", ar ? formatTimeAr(sim.currentTime) : sim.currentTime],
   ];
   return <>
     <div className="page-heading"><div><h1>{ar ? "مساعد الطاقة" : "Energy Assistant"}</h1><p>{ar ? "نقاش مبني على حالة المحاكاة الحالية." : "A conversation grounded in the current simulation state."}</p></div></div>

@@ -33,9 +33,9 @@
 .alert-card.savings { border-color: #f6d878; background: linear-gradient(150deg, #fffbeF, #fff); margin-bottom: 16px; }
 .alert-card.savings small { font-size: 11.5px; }
 .alert-toast { position: fixed; top: 14px; left: 50%; transform: translateX(-50%); z-index: 80; background: #065f46; color: #fff; border-radius: 12px; padding: 12px 20px; font-size: 13.5px; font-weight: 700; box-shadow: 0 14px 34px rgba(4, 120, 87, 0.4); max-width: min(92vw, 560px); text-align: center; }
-.alert-video { border-radius: 16px; padding: 22px; background: #0f172a; color: #fff; text-align: center; display: grid; gap: 8px; justify-items: center; margin-bottom: 16px; }
+.alert-video { border-radius: 16px; padding: 22px; background: #f8fafc; border: 1.5px solid #a7f3d0; text-align: center; display: grid; gap: 8px; justify-items: center; margin-bottom: 16px; color: var(--ink); }
 .alert-video h2 { font-size: 15px; }
-.alert-video p { font-size: 13px; color: #cbd5e1; }
+.alert-video p { font-size: 13px; color: var(--muted); }
 .alert-video small { font-size: 11.5px; color: #94a3b8; }
 .alert-devices { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-bottom: 16px; }
 .alert-devices > div { display: grid; gap: 4px; justify-items: center; text-align: center; border-radius: 14px; padding: 16px 10px; background: #fff; border: 1px solid var(--border); color: var(--accent); }
@@ -149,6 +149,9 @@ p { overflow-wrap: anywhere; }
 .system-tiles b { font-size: 14px; font-weight: 600; }
 .text-link { display: inline-flex; align-items: center; gap: 6px; margin-top: 18px; font-size: 13px; font-weight: 600; }
 .reason { margin-block: 12px 18px; line-height: 1.9; }
+.recommendation, .production-report { min-width: 0; }
+.recommendation h3, .report-decision { overflow-wrap: break-word; word-break: break-word; min-width: 0; }
+.flow-current.track { stroke-width: 5; }
 .recommendation .button { margin-block: 16px; }
 .notice { padding: 14px 16px; border: 1px solid #d5dacb; background: #f4f6ee; color: #414e34; font-size: 13px; margin-block: 16px; }
 .error-text { color: #9a302a; }
@@ -190,7 +193,9 @@ progress::-webkit-progress-value { background: var(--accent); border-radius: 4px
 .control-row input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; border-radius: 99px; background: #fff; border: 3px solid #047857; box-shadow: 0 3px 10px rgba(4, 120, 87, 0.35); cursor: grab; }
 .control-row input[type="range"]::-moz-range-thumb { width: 16px; height: 16px; border-radius: 99px; background: #fff; border: 3px solid #047857; box-shadow: 0 3px 10px rgba(4, 120, 87, 0.35); cursor: grab; }
 .control-row input[type="range"]::-moz-range-track { height: 8px; border-radius: 99px; background: #e2e8f0; }
-.check-row { display: flex; align-items: center; gap: 10px; border-radius: 12px; padding: 10px 12px; background: #f8fafc; border: 1px solid var(--border); font-size: 13.5px; min-width: 0; overflow: hidden; }
+.sim-inputs fieldset { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.sim-inputs fieldset > legend, .sim-inputs fieldset > p { grid-column: 1 / -1; }
+.check-row { display: flex; align-items: center; gap: 10px; border-radius: 12px; padding: 12px; background: #f8fafc; border: 1px solid var(--border); font-size: 13.5px; min-width: 0; min-height: 52px; overflow: hidden; }
 .check-row input { flex: none; width: 18px; height: 18px; accent-color: #047857; }
 .check-row span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
 .check-row small { flex: none; }
@@ -306,7 +311,7 @@ legend { padding: 0 6px; font-size: 14px; }
 .context-rows { display: grid; gap: 6px; margin: 12px 0; }
 .context-rows > div { display: flex; align-items: center; justify-content: space-between; gap: 10px; border-radius: 12px; padding: 9px 12px; background: #f8fafc; border: 1px solid var(--border); font-size: 13px; min-width: 0; }
 .context-rows dt { color: var(--muted); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.context-rows dd { margin: 0; font-weight: 700; white-space: nowrap; }
+.context-rows dd { margin: 0; font-weight: 700; white-space: nowrap; font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
 .decision-card { display: grid; gap: 4px; border-radius: 16px; padding: 16px; margin: 12px 0; background: linear-gradient(150deg, #047857, #065f46); color: #fff; box-shadow: 0 12px 28px rgba(4, 120, 87, 0.35); }
 .decision-card span { font-size: 12px; opacity: 0.85; }
 .decision-card strong { font-size: 17px; }
