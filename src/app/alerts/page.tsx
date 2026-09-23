@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Siren, Droplets, Cable, Wrench, CircleHelp, Clapperboard } from "lucide-react";
+import { Siren, Droplets, Cable, Wrench, CircleHelp, Clapperboard, Smartphone, Laptop, Monitor } from "lucide-react";
 import { useSolar } from "@/components/dashboard/SolarProvider";
 
 export default function AlertsPage() {
@@ -60,7 +60,13 @@ export default function AlertsPage() {
       {tech && <p role="status" className="alert-status">{ar ? "تم إرسال التقرير والتشخيص للفني المعتمد." : "Report sent to the certified technician."}</p>}
     </section>
 
-    <section className="alert-video"><Clapperboard size={22} aria-hidden="true" /><h2>{ar ? "شاهد الفيديو التوضيحي (1:30 دقيقة)" : "Watch the explainer video (1:30)"}</h2><p>{ar ? "خطوة بخطوة: كيف يستجيب النظام وينبه العميل." : "Step by step: how the system responds and alerts you."}</p></section>
+    <section className="alert-video"><Clapperboard size={22} aria-hidden="true" /><h2>{ar ? "شاهد الفيديو التوضيحي (1:30 دقيقة)" : "Watch the explainer video (1:30)"}</h2><p>{ar ? "خطوة بخطوة: كيف يستجيب النظام وينبه العميل." : "Step by step: how the system responds and alerts you."}</p><small>{ar ? "الفيديو قيد الإنتاج — يُرفع هنا فور جهوزيته." : "Video in production — published here once ready."}</small></section>
+
+    <section className="alert-devices">
+      <div><Smartphone size={20} aria-hidden="true" /><strong>{ar ? "الجوال" : "Mobile"}</strong><small>{ar ? "تنبيهات فورية بالعربي" : "Instant Arabic alerts"}</small></div>
+      <div><Laptop size={20} aria-hidden="true" /><strong>{ar ? "اللابتوب" : "Laptop"}</strong><small>{ar ? "لوحة التشخيص الكاملة" : "Full diagnostics board"}</small></div>
+      <div><Monitor size={20} aria-hidden="true" /><strong>{ar ? "الكمبيوتر" : "Desktop"}</strong><small>{ar ? "متابعة المحطة الكبيرة" : "Large-station view"}</small></div>
+    </section>
 
     <section className="alert-faq">
       <h2><CircleHelp size={19} aria-hidden="true" />{ar ? "الأسئلة الشائعة" : "Frequently asked questions"}</h2>
