@@ -7,7 +7,23 @@ export const metadata: Metadata = {
   title: "SolarWise — Intelligent Solar Energy Management",
   description:
     "AI-powered recommendation prototype for managing solar surplus energy. Simulation only.",
+  metadataBase: new URL("https://shamsi-smart.vercel.app"),
   icons: { icon: "/logo-solarwise.png" },
+  openGraph: {
+    title: "SolarWise — Intelligent Solar Energy Management",
+    description: "AI-powered recommendation prototype for managing solar surplus energy. Simulation only.",
+    url: "https://shamsi-smart.vercel.app/",
+    siteName: "SolarWise",
+    locale: "ar_SA",
+    type: "website",
+    images: [{ url: "/logo.png", width: 1189, height: 750, alt: "SolarWise logo" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "SolarWise — Intelligent Solar Energy Management",
+    description: "AI-powered recommendation prototype for managing solar surplus energy.",
+    images: ["/logo.png"],
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
