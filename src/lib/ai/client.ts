@@ -143,7 +143,7 @@ function classify(status: number, step: string): string {
 export async function callCodexDecider(req: DecisionRequest): Promise<AiProviderResult> {
   const apiKey = process.env.CODEX_API_KEY?.trim();
   const apiBase = process.env.CODEX_API_URL?.trim();
-  const model = process.env.CODEX_MODEL?.trim() || "gpt-5.6-sol";
+  const model = process.env.CODEX_MODEL?.trim() || "gpt-4o-mini";
 
   if (!apiKey || !apiBase) return { ok: false, error: "AI not configured" };
 
@@ -215,6 +215,7 @@ export async function callCodexDecider(req: DecisionRequest): Promise<AiProvider
     if (lastError === "unknown error" || lastError.startsWith("endpoint not found")) {
       lastError = classify(rr.status, "responses");
     }
+    console.error(`[ai-decider] failed model=${model} error=${lastError}`);
     return { ok: false, model, error: lastError };
   } catch (e) {
     return {

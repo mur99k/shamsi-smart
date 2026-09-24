@@ -238,7 +238,7 @@ export async function chatReply(ctx: ChatContext): Promise<{
 
   const apiKey = process.env.CODEX_API_KEY?.trim();
   const apiBase = process.env.CODEX_API_URL?.trim();
-  const model = process.env.CODEX_MODEL?.trim() || "gpt-5.6-sol";
+  const model = process.env.CODEX_MODEL?.trim() || "gpt-4o-mini";
   const city = detectCity(ctx.messages);
   const weather = await fetchCityWeather(city.lat, city.lon, city.place);
   if (!apiKey || !apiBase) {
@@ -267,6 +267,8 @@ export async function chatReply(ctx: ChatContext): Promise<{
       clearTimeout(timer);
     }
     if (res.status !== 200) {
+      // Log provider failure server-side (never the key) for Vercel log diagnosis.
+      console.error(`[ai-chat] provider status=${res.status} model=${model} body=${JSON.stringify(res.json).slice(0, 300)}`);
       // Deterministic local fallback keeps the strongest guarantee: same state
       const fb = fallbackDecide(ctx.state);
       return {
