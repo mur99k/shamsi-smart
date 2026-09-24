@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { aiConfigured, decide } from "@/lib/ai/decision";
 import type { ApiError, DecisionRequest } from "@/types/energy";
 
+export const maxDuration = 60;
+export const dynamic = "force-dynamic";
+
 const bad = (message: string) =>
   NextResponse.json({ error: "INVALID_INPUT", message } satisfies ApiError, { status: 400 });
 

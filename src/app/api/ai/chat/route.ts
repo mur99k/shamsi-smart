@@ -3,6 +3,9 @@ import { chatReply, type ChatMessage } from "@/lib/ai/chat";
 import type { ApiError, DecisionRequest, RecommendedAction } from "@/types/energy";
 import { RECOMMENDED_ACTIONS } from "@/types/energy";
 
+export const maxDuration = 60;
+export const dynamic = "force-dynamic";
+
 const bad = (message: string) =>
   NextResponse.json({ error: "INVALID_INPUT", message } satisfies ApiError, { status: 400 });
 

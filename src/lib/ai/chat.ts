@@ -245,9 +245,9 @@ export async function chatReply(ctx: ChatContext): Promise<{
     return { reply: fallbackReply(ctx, calculated, weather), source: "fallback", calculated };
   }
 
-  const history = ctx.messages.slice(-8).map((m) => ({
+  const history = ctx.messages.slice(-5).map((m) => ({
     role: m.role,
-    content: m.content.slice(0, 1000),
+    content: m.content.slice(0, 800),
   }));
   const system = buildChatSystemPrompt(ctx.state, calc.netEnergyW, calc.excessEnergyW, calc.energyShortageW, calc.status, ctx.decision, ctx.lang, weather);
 
@@ -260,7 +260,7 @@ export async function chatReply(ctx: ChatContext): Promise<{
       res = await postJson(chat, apiKey, {
         model,
         temperature: 0.3,
-        max_tokens: 500,
+        max_tokens: 350,
         messages: [{ role: "system", content: system }, ...history],
       });
     } finally {
