@@ -186,7 +186,7 @@ function fallbackReply(ctx: ChatContext, calc: { net: number; excess: number; sh
   // Casual check-ins get varied human acknowledgments, never a status dump.
   // Elongated letters (كييف، هلااا) are normalized for intent matching only.
   const qNorm = q.replace(/([اوي])\1+/g, "$1");
-  if (/(تسمعني|سامعني|كيفك|كيف الحال|كيف حالك|شلونك|وشلونك|عساك بخير|وش الاخبار|وش اخبارك|وش علومك|عساك طيب|وش مسوي|تمام|شخبارك|وش اخبارك|هلا|اهلا|أهلين|ياهلا|حياك|مرحبا|صباح الخير|مساء الخير|السلام|هاي|do you hear|how are you|you there|are you listening|hello|hi|hey|good morning|good evening|what.?s up)/.test(qNorm)) {
+  if (/(تسمعني|سامعني|اسمع|ياخي|كيفك|كيف الحال|كيف حالك|شلونك|وشلونك|عساك بخير|وش الاخبار|وش اخبارك|وش علومك|عساك طيب|وش مسوي|تمام|شخبارك|وش اخبارك|هلا|اهلا|أهلين|ياهلا|حياك|مرحبا|صباح الخير|مساء الخير|السلام|هاي|رد|ردد|do you hear|how are you|you there|are you listening|hello|hi|hey|good morning|good evening|what.?s up)/.test(qNorm)) {
     const greetAr = [
       `هلا وغلا فيك! طاقتك اليوم ممتازة — فائض ${calc.excess}W وبطارية ${s.battery.levelPercent}%. آمرني!`,
       `أهلين وسهلين! الشمس شغالة والإنتاج ${s.solarProductionW}W — وش تبي تعرف؟`,
@@ -250,14 +250,19 @@ function fallbackReply(ctx: ChatContext, calc: { net: number; excess: number; sh
       ? "ما فهمت عليك — اكتب سؤالك بكلمات واضحة، مثل: هل عندي فائض؟ أو: كم الحرارة في جدة؟"
       : "I didn't catch that — write your question in clear words, like: do I have surplus? or: Jeddah temperature?";
   }
-  // Solar how-to / general energy knowledge: brief safe guidance + steer.
+  // Food/fruit chit-chat: one playful line, then steer warmly (never cold).
+  if (/(بطيخ|شمام|تفاح|موز|فراولة|عنب|مانجو|اكل|أكل|فاكهة|فواكه|عصير|food|fruit|eat|apple|banana)/.test(q)) {
+    return ar
+      ? `ههه سؤال لذيذ! عن نفسي أميل للبطيخ البارد في حر جدة. وبما إننا في الحر: فائضك ${calc.excess}W يشغل المكيف براحة — تبي أحسب لك كم ساعة يكفي؟`
+      : `Haha, tasty question! I'd go with cold watermelon in this heat. Speaking of heat: your ${calc.excess}W surplus runs cooling comfortably — want me to estimate for how long?`;
+  }
   if (/(كيف|شلون|طريقة|how|كم سعر|بكم|افضل لوح|أفضل لوح|تركيب|تنظيف الألواح|clean|solar panel)/.test(q)) {
     return ar
       ? `سؤال مهم! كقاعدة عامة: نظّف الألواح بانتظام، وراقب الظلال، وخزّن الفائض بدل هدره. وفي نظامك الحالي: فائض ${calc.excess}W وبطارية ${s.battery.levelPercent}% — تبي خطة محددة لهما؟`
       : `Good question! As a rule of thumb: keep panels clean, watch for shading, and store surplus instead of wasting it. In your system right now: ${calc.excess}W surplus, battery ${s.battery.levelPercent}% — want a specific plan for them?`;
   }
-  // Live energy-state questions (surplus? battery? production?) get the live numbers directly.
-  if (/(فائض|surplus|بطار\w* (كم|وضع|حالة|مستوى)|battery (level|status|state)|كم الإنتاج|production|استهلاك|consumption)/.test(q)) {
+  // Live energy-state questions (surplus? battery? production? net?) get the live numbers directly.
+  if (/(فائض|surplus|بطار|انتاج|إنتاج|production|استهلاك|consumption|صافي|net|كم (الطاقة|انتاج|إنتاج))/.test(q)) {
     return ar
       ? `نعم، عندك فائض ${calc.excess}W الآن (إنتاج ${s.solarProductionW}W واستهلاك ${s.consumptionW}W)، والبطارية عند ${s.battery.levelPercent}%.`
       : `Yes — you have ${calc.excess}W surplus right now (producing ${s.solarProductionW}W, using ${s.consumptionW}W), battery at ${s.battery.levelPercent}%.`;
@@ -266,10 +271,10 @@ function fallbackReply(ctx: ChatContext, calc: { net: number; excess: number; sh
   // RED LINE kept: no invented facts. Applies ONLY when the question has
   // no energy/weather content at all (energy questions are answered above).
   if (/^(من|متى|أين|وين|كم|ما|ماذا|ماهو|هل|وش|ايش|who|what|when|where|why|how|which)(?=\s|$)/.test(q.trim())
-    && !/(بطار|فائض|شمس|طاقة|كهرب|استهلاك|إنتاج|انتاج|مكيف|سيارة|حمل|شحن|طقس|حرارة|مطر|رطوبة|لوح|عجز|surplus|battery|solar|energy|weather|charge|temp|rain|humid|panel|load|consumption)/.test(q)) {
+    && !/(بطار|فائض|شمس|طاقة|كهرب|استهلاك|إنتاج|انتاج|مكيف|سيارة|حمل|شحن|طقس|حرارة|مطر|رطوبة|لوح|عجز|صافي|surplus|battery|solar|energy|weather|charge|temp|rain|humid|panel|load|consumption|production|net)/.test(q)) {
     return ar
-      ? `هذا خارج تخصصي في الطاقة الشمسية فما أبغى أخمن لك إجابة. لكن في تخصصي أعرف كل شيء: فائضك ${calc.excess}W وبطاريتك ${s.battery.levelPercent}% — اسألني عنهما!`
-      : `That's outside my solar specialty so I won't guess. But in my field I know everything: your surplus is ${calc.excess}W, battery ${s.battery.levelPercent}% — ask me about them!`;
+      ? `ههه، هذا خارج ملعبي شوي — تخصصي الطاقة الشمسية وما أبغى أفتي لك. بس في ملعبي أعرف كل شيء: فائضك ${calc.excess}W وبطاريتك ${s.battery.levelPercent}% — اسألني عنهما!`
+      : `Haha, that's slightly outside my field — I'm solar, and I won't bluff. But on my turf I know everything: your surplus is ${calc.excess}W, battery ${s.battery.levelPercent}% — ask me about them!`;
   }
   // Anything else off-script: one natural pivot, never echoing the user's words.
   return ar
