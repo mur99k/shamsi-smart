@@ -114,9 +114,8 @@ function buildChatSystemPrompt(
 ): string {
   return [
     "You are SolarWise AI, a smart, conversational, and context-aware assistant for a smart solar management system.",
-    "Answer ANY user question dynamically and naturally in the user's language (Arabic or English, matching what they wrote). NEVER copy-paste a fixed status block.",
-    "If the user asks off-topic/casual questions (e.g. jokes, food preferences), give a brief friendly answer, then smoothly steer the conversation back to solar energy and system status.",
-    "Here is the live system context (hidden grounding data — use it ONLY when answering or naturally steering):",
+    "Answer the user's question directly in a natural, intelligent, human tone in the user's language (Arabic or English, matching what they wrote). NEVER repeat the user's words back. NEVER use canned templates or fixed status blocks. Answer to the point of the question; if it is off the energy topic, answer briefly and smartly, then return smoothly to the system.",
+    "Here is the live system context (hidden grounding data for use only when needed):",
     "This build is software simulation unless the UI explicitly shows ESP32 live mode; say so only when directly relevant, never as boilerplate. Be warm and natural, never stiff. Rules:",
     "1. Never invent data, sensors, measurements, or results. Use ONLY the snapshot below.",
     "2. If hardware is mentioned, state clearly this build is software simulation; hardware (ESP32/Arduino/sensors) is a planned future stage, not present.",
@@ -220,22 +219,10 @@ function fallbackReply(ctx: ChatContext, calc: { net: number; excess: number; sh
     if (warns.length === 0) return ar ? "لا توجد تحذيرات حاليًا — النظام يعمل ضمن الحدود الطبيعية." : "No warnings right now — the system is within normal limits.";
     return (ar ? "التحذيرات الحالية: " : "Current warnings: ") + warns.join(ar ? "؛ " : "; ");
   }
-  // Anything else off-script: brief friendly touch + natural steer to live numbers.
-  // Templates rotate by question hash so no two different questions get identical replies.
-  const bridgesAr = [
-    `سؤال حلو! وبمناسبة الكلام، طاقة بيتك اليوم ممتازة — عندك فائض ${calc.excess}W، تحب نستخدمه لشحن البطارية (عند ${s.battery.levelPercent}%) أو التكييف؟`,
-    `ههه، خليني أجاوبك بصراحة ثم نرجع لموضوعنا الأحلى: الشمس. إنتاجك ${s.solarProductionW}W واستهلاكك ${s.consumptionW}W، يعني فائض ${calc.excess}W جاهز — أصرفه على إيه برأيك؟`,
-    `تمام، فهمت قصدك! وبما إننا هنا: بطاريتك عند ${s.battery.levelPercent}% والفائض ${calc.excess}W — تبي نجهزها لليل ولا نشغل حمل الآن؟`,
-  ];
-  const bridgesEn = [
-    `Good question! Speaking of which, your home energy looks great today — ${calc.excess}W surplus. Shall we use it to charge the battery (${s.battery.levelPercent}%) or run cooling?`,
-    `Ha, honestly answered! Back to our favorite topic: the sun. You're producing ${s.solarProductionW}W against ${s.consumptionW}W, so ${calc.excess}W surplus is ready — what shall we spend it on?`,
-    `Got it! And since we're here: battery at ${s.battery.levelPercent}% with ${calc.excess}W surplus — save it for tonight or run a load now?`,
-  ];
-  const list = ar ? bridgesAr : bridgesEn;
-  const pick = list[[...q].reduce((a, c) => a + (c.codePointAt(0) ?? 0), 0) % list.length] ?? list[0];
-  const topic = last.slice(0, 60);
-  return ar ? `${topic ? `«${topic}» — ` : ""}${pick}` : `${topic ? `"${topic}" — ` : ""}${pick}`;
+  // Anything else off-script: one natural pivot, never echoing the user's words.
+  return ar
+    ? `وصلت رسالتك! أنا مساعد SolarWise للطاقة الشمسية — اسألني عن الفائض أو البطارية أو طقس مدينتك، وسأجيبك فورًا.`
+    : `Got your message! I'm the SolarWise solar assistant — ask me about surplus, battery, or your city's weather and I'll answer right away.`;
 }
 
 export async function chatReply(ctx: ChatContext): Promise<{
