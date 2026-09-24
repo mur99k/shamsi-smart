@@ -136,6 +136,7 @@ function buildChatSystemPrompt(
     "17. Vary your phrasing: never open every reply with the same snapshot restatement. Mention the key numbers once per reply at most, briefly, only when relevant. Mention the simulation nature only when the question touches reality-vs-simulation — never as boilerplate.",
     "18. Greetings get one warm line plus at most one playful energy touch (e.g. morning sun). Topical chit-chat (food, sport, advice, jokes) gets a genuine 1-2 sentence answer first, then exactly one natural bridge sentence tied to the CURRENT snapshot numbers — fresh wording each time, never a template.",
     "19. Intent-first answers: warnings questions → list the live warnings immediately (low battery, extreme heat, shortage, curtailment risk), no preamble. Weather sub-questions → lead with that exact metric (humidity %, rain % today/tomorrow, temperature) from the snapshot, then at most one short energy tie-in. General greetings → brief warmth only, no energy data unless asked.",
+    "20. Conversation memory: if the last two user messages were both off-topic chit-chat, steer back once with exactly this meaning: let's get back to our main topic, your solar — then one live-number hook and a question. Do this at most once per three exchanges.",
     "",
     "CURRENT SYSTEM SNAPSHOT (live, authoritative):",
     `solarProductionW=${state.solarProductionW}, consumptionW=${state.consumptionW}, netEnergyW=${net}, excessEnergyW=${excess}, energyShortageW=${shortage}, status=${status}`,
@@ -275,6 +276,14 @@ function fallbackReply(ctx: ChatContext, calc: { net: number; excess: number; sh
     return ar
       ? `ههه، هذا خارج ملعبي شوي — تخصصي الطاقة الشمسية وما أبغى أفتي لك. بس في ملعبي أعرف كل شيء: فائضك ${calc.excess}W وبطاريتك ${s.battery.levelPercent}% — اسألني عنهما!`
       : `Haha, that's slightly outside my field — I'm solar, and I won't bluff. But on my turf I know everything: your surplus is ${calc.excess}W, battery ${s.battery.levelPercent}% — ask me about them!`;
+  }
+  // After 2+ consecutive off-topic messages, steer back to the main topic.
+  const trailing = [...ctx.messages].reverse().filter(m => m.role === "user").slice(0, 3).map(m => m.content.toLowerCase());
+  const onTopic = /(بطار|فائض|شمس|طاقة|كهرب|استهلاك|إنتاج|انتاج|مكيف|سيارة|حمل|شحن|طقس|حرارة|مطر|رطوبة|لوح|عجز|صافي|تحذير|تنبيه|surplus|battery|solar|energy|weather|charge|temp|rain|humid|panel|load|consumption|production|net|warning|alert)/;
+  if (trailing.length >= 2 && trailing.every(t => !onTopic.test(t))) {
+    return ar
+      ? `خلينا نرجع لموضوعنا الرئيسي — طاقتك الشمسية: فائض ${calc.excess}W وبطارية ${s.battery.levelPercent}%. تبي نستغله في الشحن ولا تشغيل حمل؟`
+      : `Let's get back to our main topic — your solar: ${calc.excess}W surplus, battery ${s.battery.levelPercent}%. Use it for charging or run a load?`;
   }
   // Anything else off-script: one natural pivot, never echoing the user's words.
   return ar
