@@ -160,7 +160,10 @@ function stripMarkdown(text: string): string {
     .replace(/__(.+?)__/g, "$1")
     .replace(/`(.+?)`/g, "$1")
     .replace(/^#{1,6}\s+/gm, "")
-    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, "$1");
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, "$1")
+    .replace(/[ \t]+$/gm, "")
+    .replace(/\n{2,}/g, "\n")
+    .trim();
 }
 /** Deterministic local answer when the AI is unreachable (never crashes).
  * It understands the question type so it never parrots one canned reply. */
