@@ -14,6 +14,8 @@ export interface Message {
   snapshot: string;
   decision?: RecommendedAction;
   error?: boolean;
+  /** True while tokens are still streaming in — render live, skip typewriter. */
+  live?: boolean;
 }
 
 function useSolarState() {
@@ -191,17 +193,68 @@ function useSolarState() {
     setDraft("");
     setChatLoading(true);
     const timer = setTimeout(() => controller.abort(), 45000);
+    // Empty assistant bubble appears instantly, then fills token by token.
+    const base: Message[] = [...next, { role: "assistant" as const, content: "", snapshot, decision: decision.recommendedAction, live: true }].slice(-40);
+    setMessages(base);
+    const patchLive = (content: string, live: boolean, source?: "ai" | "fallback") =>
+      setMessages((prev) => {
+        const copy = [...prev];
+        const idx = copy.length - 1;
+        const lastMsg = copy[idx];
+        if (!lastMsg || lastMsg.role !== "assistant") return prev;
+        copy[idx] = { ...lastMsg, content, live, ...(source ? { source } : {}) };
+        return copy;
+      });
     try {
       const response = await fetch("/api/ai/chat", {
-        method: "POST", headers: { "Content-Type": "application/json" }, signal: controller.signal,
+        method: "POST", headers: { "Content-Type": "application/json", Accept: "text/event-stream" }, signal: controller.signal,
         body: JSON.stringify({ state, decision: { recommendedAction: decision.recommendedAction, reason: decision.reason }, lang: msgLang,
           // API accepts at most 10 messages, each at most 1000 characters.
           messages: next.filter(message => !message.error).slice(-9).map(({ role, content: value }) => ({ role, content: value.slice(0, 1000) })),
         }),
       });
-      const data = await response.json();
-      if (!response.ok || !data?.success || typeof data.reply !== "string") throw new Error("Chat unavailable");
-      setMessages([...next, { role: "assistant", content: data.reply, source: data.source === "ai" ? "ai" : "fallback", snapshot, decision: decision.recommendedAction }].slice(-40) as Message[]);
+      if (!response.ok || !response.body) throw new Error("Chat unavailable");
+      // Non-streaming JSON (tests, proxies): legacy contract path.
+      if (!(response.headers.get("content-type") || "").includes("text/event-stream")) {
+        const data = await response.json();
+        if (!data?.success || typeof data.reply !== "string") throw new Error("Chat unavailable");
+        setMessages([...next, { role: "assistant", content: data.reply, source: data.source === "ai" ? "ai" : "fallback", snapshot, decision: decision.recommendedAction }].slice(-40) as Message[]);
+        return;
+      }
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let full = "";
+      let settled = false;
+      const finish = (content: string, source: "ai" | "fallback") => {
+        if (settled) return;
+        settled = true;
+        patchLive(content, false, source);
+      };
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() ?? "";
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed.startsWith("data:")) continue;
+          try {
+            const evt = JSON.parse(trimmed.slice(5).trim()) as Record<string, unknown>;
+            if (typeof evt.token === "string") {
+              full += evt.token;
+              patchLive(full, true, "ai");
+            } else if (typeof evt.reply === "string") {
+              finish(evt.reply, evt.source === "ai" ? "ai" : "fallback");
+            }
+          } catch { /* skip malformed SSE line */ }
+        }
+      }
+      if (!settled) {
+        if (full.trim()) finish(full, "ai");
+        else throw new Error("Chat unavailable");
+      }
     } catch {
       setMessages([...next, { role: "assistant", content: msgLang === "ar" ? "لم يصلني رد. أعد إرسال سؤالك وسأجيبك فورًا." : "Could not get a reply. Send your question again to retry.", snapshot, error: true }].slice(-40) as Message[]);
     } finally {

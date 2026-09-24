@@ -15,7 +15,7 @@ export default function AIChat() {
   useEffect(() => {
     const i = messages.length - 1;
     const m = messages[i];
-    if (!m || m.role !== "assistant" || m.error) return;
+    if (!m || m.role !== "assistant" || m.error || m.live) return;
     const words = m.content.split(/(\s+)/).length;
     if ((typed[i] ?? 0) >= words) return;
     const id = window.setTimeout(() => {
@@ -40,7 +40,7 @@ export default function AIChat() {
     <div ref={box} className="chat-history" role="log" aria-live="polite" aria-relevant="additions" aria-busy={chatLoading}>
       {!messages.length && <div className="chat-empty"><h3>{ar ? "ما سؤالك عن حالة الطاقة؟" : "What would you like to know?"}</h3><p>{ar ? "الإنتاج والاستهلاك وحالة البطارية جاهزة للنقاش." : "Solar output, consumption and battery state are ready to discuss."}</p></div>}
       {messages.map((message, index) => {
-        const parts = message.role === "assistant" && !message.error ? message.content.split(/(\s+)/) : null;
+        const parts = message.role === "assistant" && !message.error && !message.live ? message.content.split(/(\s+)/) : null;
         const isNewest = index === messages.length - 1;
         const shown = parts ? (typed[index] ?? (isNewest ? 0 : parts.length)) : message.content.length;
         const text = parts ? parts.slice(0, shown).join("") : message.content;

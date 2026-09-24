@@ -154,7 +154,7 @@ function buildChatSystemPrompt(
 }
 
 /** Strip markdown markers since the UI renders raw text (no markdown engine). */
-function stripMarkdown(text: string): string {
+export function stripMarkdown(text: string): string {
   return text
     .replace(/\*\*(.+?)\*\*/g, "$1")
     .replace(/__(.+?)__/g, "$1")
@@ -167,7 +167,7 @@ function stripMarkdown(text: string): string {
 }
 /** Deterministic local answer when the AI is unreachable (never crashes).
  * It understands the question type so it never parrots one canned reply. */
-function fallbackReply(ctx: ChatContext, calc: { net: number; excess: number; shortage: number; status: string }, weather: LiveWeather | null): string {
+export function fallbackReply(ctx: ChatContext, calc: { net: number; excess: number; shortage: number; status: string }, weather: LiveWeather | null): string {
   const s = ctx.state;
   const ar = ctx.lang === "ar";
   const last = ctx.messages.filter(m => m.role === "user").slice(-1)[0]?.content ?? "";
@@ -308,9 +308,14 @@ function fallbackReply(ctx: ChatContext, calc: { net: number; excess: number; sh
     : `Got your message! I'm the SolarWise solar assistant — ask me about surplus, battery, or your city's weather and I'll answer right away.`;
 }
 
-export async function chatReply(ctx: ChatContext): Promise<{
-  reply: string;
-  source: "ai" | "fallback";
+/** Shared preparation for streaming and non-streaming chat paths. */
+export async function prepareChat(ctx: ChatContext): Promise<{
+  system: string;
+  history: { role: string; content: string }[];
+  model: string;
+  apiKey?: string;
+  apiBase?: string;
+  weather: LiveWeather | null;
   calculated: { net: number; excess: number; shortage: number; status: string };
 }> {
   const calc = calculateEnergy(ctx.state.solarProductionW, ctx.state.consumptionW);
@@ -320,7 +325,6 @@ export async function chatReply(ctx: ChatContext): Promise<{
     shortage: calc.energyShortageW,
     status: calc.status,
   };
-
   const apiKey = process.env.CODEX_API_KEY?.trim();
   const apiBase = process.env.CODEX_API_URL?.trim();
   const model = process.env.CODEX_MODEL?.trim() || "gpt-4o-mini";
@@ -329,15 +333,24 @@ export async function chatReply(ctx: ChatContext): Promise<{
   const needsWeather = /(حرارة|طقس|مطر|غيم|رطوبة|هطول|مدينة|مناخ|temp|weather|rain|humid|precipitation|climate|jeddah|riyadh|mecca|makkah|medina|dammam|khobar|abha|tabuk|hail|jazan|najran|taif|yanbu|جدة|الرياض|مكة|المدينة|الدمام|الخبر|الشرقية|أبها|ابها|تبوك|بريدة|بريده|حائل|جازان|جيزان|نجران|الطائف|الطايف|ينبع)/.test(lastText);
   const city = detectCity(ctx.messages);
   const weather = needsWeather ? await fetchCityWeather(city.lat, city.lon, city.place) : null;
-  if (!apiKey || !apiBase) {
-    return { reply: fallbackReply(ctx, calculated, weather), source: "fallback", calculated };
-  }
-
   const history = ctx.messages.slice(-5).map((m) => ({
     role: m.role,
     content: m.content.slice(0, 800),
   }));
   const system = buildChatSystemPrompt(ctx.state, calc.netEnergyW, calc.excessEnergyW, calc.energyShortageW, calc.status, ctx.decision, ctx.lang, weather);
+  return { system, history, model, apiKey, apiBase, weather, calculated };
+}
+
+export async function chatReply(ctx: ChatContext): Promise<{
+  reply: string;
+  source: "ai" | "fallback";
+  calculated: { net: number; excess: number; shortage: number; status: string };
+}> {
+  const prep = await prepareChat(ctx);
+  const { apiKey, apiBase, model, history, system, weather, calculated } = prep;
+  if (!apiKey || !apiBase) {
+    return { reply: fallbackReply(ctx, calculated, weather), source: "fallback", calculated };
+  }
 
   try {
     const { chat } = resolveEndpoints(apiBase);

@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
-import { chatReply, type ChatMessage } from "@/lib/ai/chat";
+import { prepareChat, fallbackReply, stripMarkdown, type ChatMessage } from "@/lib/ai/chat";
+import { fallbackDecide } from "@/lib/ai/fallback";
+import { resolveEndpoints, streamChatTokens } from "@/lib/ai/client";
 import type { ApiError, DecisionRequest, RecommendedAction } from "@/types/energy";
 import { RECOMMENDED_ACTIONS } from "@/types/energy";
 
@@ -64,7 +66,7 @@ export async function POST(req: Request) {
   }
   if (messages[messages.length - 1].role !== "user") return bad("last message must be from the user");
 
-  const lang = b.lang === "en" ? "en" : "ar";
+  const lang: "ar" | "en" = b.lang === "en" ? "en" : "ar";
   const env = s.environment as Record<string, unknown> | undefined;
 
   const state: DecisionRequest = {
@@ -98,7 +100,52 @@ export async function POST(req: Request) {
       ? { recommendedAction: din.recommendedAction as RecommendedAction, reason: din.reason as string }
       : undefined;
 
-  const result = await chatReply({ state, decision, lang, messages }).catch(() => null);
+  const ctx = { state, decision, lang, messages };
+  // Streaming clients (browsers) get tokens live; others get the JSON contract.
+  if ((req.headers.get("accept") || "").includes("text/event-stream")) {
+    const prep = await prepareChat(ctx);
+    const enc = new TextEncoder();
+    const stream = new ReadableStream({
+      async start(controller) {
+        const send = (o: unknown) => controller.enqueue(enc.encode(`data: ${JSON.stringify(o)}\n\n`));
+        const sendFallback = () => {
+          const fb = fallbackDecide(prep && state);
+          const withDecision = { ...ctx, decision: { recommendedAction: fb.recommendedAction, reason: fb.reason } };
+          send({ fallback: true, reply: fallbackReply(withDecision, prep.calculated, prep.weather), source: "fallback", calculated: prep.calculated });
+        };
+        try {
+          if (!prep.apiKey || !prep.apiBase) {
+            sendFallback();
+          } else {
+            const { chat } = resolveEndpoints(prep.apiBase);
+            let full = "";
+            let gotToken = false;
+            const out = await streamChatTokens(chat, prep.apiKey, {
+              model: prep.model,
+              temperature: 0.3,
+              max_tokens: 350,
+              messages: [{ role: "system", content: prep.system }, ...prep.history],
+            }, (t) => { gotToken = true; full += t; send({ token: t }); });
+            if (!out || !gotToken || !full.trim()) {
+              sendFallback();
+            } else {
+              send({ done: true, source: "ai", calculated: prep.calculated, reply: stripMarkdown(full).slice(0, 1200) });
+            }
+          }
+        } catch {
+          try { sendFallback(); } catch { /* client gone */ }
+        } finally {
+          try { controller.close(); } catch { /* already closed */ }
+        }
+      },
+    });
+    return new Response(stream, {
+      headers: { "Content-Type": "text/event-stream; charset=utf-8", "Cache-Control": "no-cache", Connection: "keep-alive" },
+    });
+  }
+
+  const { chatReply } = await import("@/lib/ai/chat");
+  const result = await chatReply(ctx).catch(() => null);
   if (!result) return NextResponse.json({ success: false, error: "SERVICE_UNAVAILABLE", message: "Assistant is temporarily unavailable. Please try again." }, { status: 503 });
   return NextResponse.json({ success: true, ...result }, { status: 200 });
 }

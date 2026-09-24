@@ -17,6 +17,63 @@ if (typeof window !== "undefined") {
 
 const TIMEOUT_MS = 20000;
 
+/** SSE token streaming for chat completions. Calls onToken per text delta.
+ * Returns full text, or null when the provider fails / doesn't stream. */
+export async function streamChatTokens(
+  url: string,
+  key: string,
+  body: Record<string, unknown>,
+  onToken: (token: string) => void,
+  signal?: AbortSignal,
+): Promise<{ text: string; status: number } | null> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 45000);
+  const onAbort = () => controller.abort();
+  signal?.addEventListener("abort", onAbort);
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      signal: controller.signal,
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
+      body: JSON.stringify({ ...body, stream: true }),
+    });
+    if (!res.ok || !res.body) return { text: "", status: res.status };
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+    let full = "";
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n");
+      buffer = lines.pop() ?? "";
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed.startsWith("data:")) continue;
+        const payload = trimmed.slice(5).trim();
+        if (payload === "[DONE]") continue;
+        try {
+          const d = JSON.parse(payload) as Record<string, unknown>;
+          const choices = d.choices as Array<Record<string, unknown>> | undefined;
+          const delta = choices?.[0]?.delta as Record<string, unknown> | undefined;
+          const piece = typeof delta?.content === "string" ? delta.content : "";
+          if (piece) {
+            full += piece;
+            onToken(piece);
+          }
+        } catch { /* skip malformed SSE line */ }
+      }
+    }
+    return { text: full, status: res.status };
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+    signal?.removeEventListener("abort", onAbort);
+  }
+}
+
 const DECISION_JSON_SCHEMA = {
   name: "energy_decision",
   strict: true,
