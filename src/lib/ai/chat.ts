@@ -183,11 +183,21 @@ function fallbackReply(ctx: ChatContext, calc: { net: number; excess: number; sh
   const summary = ar
     ? `الفائض ${calc.excess}W والبطارية عند ${s.battery.levelPercent}%، والتوصية: ${where}.`
     : `Surplus is ${calc.excess}W, battery at ${s.battery.levelPercent}%, recommendation: ${where}.`;
-  // Casual check-ins get a human acknowledgment, never a status dump.
-  if(/(تسمعني|سامعني|كيفك|كيف حالك|شلونك|تمام|شخبارك|وش اخبارك|do you hear|how are you|you there|are you listening)/.test(q)) {
-    return ar
-      ? "نعم أسمعك بوضوح! جاهز أساعدك في متابعة طاقتك الشمسية اليوم — كيف أقدر أخدمك؟"
-      : "Yes, I hear you loud and clear! Ready to help with your solar energy today — how can I help?";
+  // Casual check-ins get varied human acknowledgments, never a status dump.
+  // Elongated letters (كييف، هلااا) are normalized for intent matching only.
+  const qNorm = q.replace(/([اوي])\1+/g, "$1");
+  if (/(تسمعني|سامعني|كيفك|كيف الحال|كيف حالك|شلونك|وشلونك|عساك بخير|تمام|شخبارك|وش اخبارك|هلا|اهلا|أهلين|ياهلا|حياك|مرحبا|صباح الخير|مساء الخير|السلام|هاي|do you hear|how are you|you there|are you listening|hello|hi|hey|good morning|good evening)/.test(qNorm)) {
+    const greetAr = [
+      `هلا وغلا فيك! طاقتك اليوم ممتازة — فائض ${calc.excess}W وبطارية ${s.battery.levelPercent}%. آمرني!`,
+      `أهلين وسهلين! الشمس شغالة والإنتاج ${s.solarProductionW}W — وش تبي تعرف؟`,
+      `حياك الله! كل شيء تمام: استهلاكك ${s.consumptionW}W فقط مقابل إنتاج قوي. اسألني عن أي شيء!`,
+    ];
+    const greetEn = [
+      `Hey, welcome! Your energy looks great — ${calc.excess}W surplus, battery ${s.battery.levelPercent}%. What do you need?`,
+      `Hello there! The sun is doing its job at ${s.solarProductionW}W — what would you like to know?`,
+    ];
+    const glist = ar ? greetAr : greetEn;
+    return glist[[...qNorm].reduce((a, c) => a + (c.codePointAt(0) ?? 0), 0) % glist.length] ?? glist[0];
   }
   // Conditional "what if battery full?" gets a conditional answer.
   if (/(امتلأت|مليانة|متروسة|فل|full|fills up|100%)/.test(q) && /(بطار|battery)/.test(q)) {
