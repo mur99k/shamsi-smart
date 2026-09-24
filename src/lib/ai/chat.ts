@@ -229,6 +229,48 @@ function fallbackReply(ctx: ChatContext, calc: { net: number; excess: number; sh
     if (warns.length === 0) return ar ? "لا توجد تحذيرات حاليًا — النظام يعمل ضمن الحدود الطبيعية." : "No warnings right now — the system is within normal limits.";
     return (ar ? "التحذيرات الحالية: " : "Current warnings: ") + warns.join(ar ? "؛ " : "; ");
   }
+  // Identity: who are you?
+  if (/(من انت|وش اسمك|عرف بنفسك|who are you|your name|what are you)/.test(q)) {
+    return ar
+      ? "أنا مساعد SolarWise — أتابع طاقتك الشمسية لحظة بلحظة: الإنتاج والبطارية والطقس، وأقترح أفضل وجهة للفائض. جرّب تسألني: هل عندي فائض الآن؟"
+      : "I'm the SolarWise assistant — I track your solar energy moment by moment: production, battery, weather, and the best surplus destination. Try asking: do I have surplus now?";
+  }
+  // Insults: stay polite, redirect once.
+  if (/(غبي|احمق|فاشل|stupid|dumb|idiot|useless)/.test(q)) {
+    return ar
+      ? "حقك علي! لو إجابة ما عجبتك، قل لي وش تبغى بالضبط وسأعطيك أدق ما عندي عن نظامك."
+      : "Fair enough! Tell me exactly what you need and I'll give you my best answer about your system.";
+  }
+  // Gibberish: ask for clarification instead of dumping status.
+  // Catches empty-ish input AND stuttered nonsense (repeated syllables).
+  const letters = q.replace(/[^؀-ۿa-zA-Z]/g, "");
+  const stutter = /(..).*\1/.test(letters);
+  if (letters.length < 2 || (letters.length <= 8 && stutter)) {
+    return ar
+      ? "ما فهمت عليك — اكتب سؤالك بكلمات واضحة، مثل: هل عندي فائض؟ أو: كم الحرارة في جدة؟"
+      : "I didn't catch that — write your question in clear words, like: do I have surplus? or: Jeddah temperature?";
+  }
+  // Solar how-to / general energy knowledge: brief safe guidance + steer.
+  if (/(كيف|شلون|طريقة|how|كم سعر|بكم|افضل لوح|أفضل لوح|تركيب|تنظيف الألواح|clean|solar panel)/.test(q)) {
+    return ar
+      ? `سؤال مهم! كقاعدة عامة: نظّف الألواح بانتظام، وراقب الظلال، وخزّن الفائض بدل هدره. وفي نظامك الحالي: فائض ${calc.excess}W وبطارية ${s.battery.levelPercent}% — تبي خطة محددة لهما؟`
+      : `Good question! As a rule of thumb: keep panels clean, watch for shading, and store surplus instead of wasting it. In your system right now: ${calc.excess}W surplus, battery ${s.battery.levelPercent}% — want a specific plan for them?`;
+  }
+  // Live energy-state questions (surplus? battery? production?) get the live numbers directly.
+  if (/(فائض|surplus|بطار\w* (كم|وضع|حالة|مستوى)|battery (level|status|state)|كم الإنتاج|production|استهلاك|consumption)/.test(q)) {
+    return ar
+      ? `نعم، عندك فائض ${calc.excess}W الآن (إنتاج ${s.solarProductionW}W واستهلاك ${s.consumptionW}W)، والبطارية عند ${s.battery.levelPercent}%.`
+      : `Yes — you have ${calc.excess}W surplus right now (producing ${s.solarProductionW}W, using ${s.consumptionW}W), battery at ${s.battery.levelPercent}%.`;
+  }
+  // General knowledge outside energy: honest boundary, one line, then steer.
+  // RED LINE kept: no invented facts. Applies ONLY when the question has
+  // no energy/weather content at all (energy questions are answered above).
+  if (/^(من|متى|أين|وين|كم|ما|ماذا|ماهو|هل|وش|ايش|who|what|when|where|why|how|which)(?=\s|$)/.test(q.trim())
+    && !/(بطار|فائض|شمس|طاقة|كهرب|استهلاك|إنتاج|انتاج|مكيف|سيارة|حمل|شحن|طقس|حرارة|مطر|رطوبة|لوح|عجز|surplus|battery|solar|energy|weather|charge|temp|rain|humid|panel|load|consumption)/.test(q)) {
+    return ar
+      ? `هذا خارج تخصصي في الطاقة الشمسية فما أبغى أخمن لك إجابة. لكن في تخصصي أعرف كل شيء: فائضك ${calc.excess}W وبطاريتك ${s.battery.levelPercent}% — اسألني عنهما!`
+      : `That's outside my solar specialty so I won't guess. But in my field I know everything: your surplus is ${calc.excess}W, battery ${s.battery.levelPercent}% — ask me about them!`;
+  }
   // Anything else off-script: one natural pivot, never echoing the user's words.
   return ar
     ? `وصلت رسالتك! أنا مساعد SolarWise للطاقة الشمسية — اسألني عن الفائض أو البطارية أو طقس مدينتك، وسأجيبك فورًا.`
