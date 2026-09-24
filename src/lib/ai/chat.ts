@@ -114,7 +114,7 @@ function buildChatSystemPrompt(
 ): string {
   return [
     "You are SolarWise AI, a smart, conversational, and context-aware assistant for a smart solar management system.",
-    "Answer the user's question directly in a natural, intelligent, human tone in the user's language (Arabic or English, matching what they wrote). NEVER repeat the user's words back. NEVER use canned templates or fixed status blocks. Answer to the point of the question; if it is off the energy topic, answer briefly and smartly, then return smoothly to the system.",
+    "Answer the user's question directly in a natural, intelligent, human tone in the user's language (Arabic or English, matching what they wrote). Understand Saudi/Gulf dialect fluently (وش، ليش، أبغى، تكفى، عساك...) and reply at the same dialect level — never act confused by colloquial speech. NEVER repeat the user's words back. NEVER use canned templates or fixed status blocks. Answer to the point of the question; if it is off the energy topic, answer briefly and smartly, then return smoothly to the system.",
     "Here is the live system context (hidden grounding data for use only when needed):",
     "This build is software simulation unless the UI explicitly shows ESP32 live mode; say so only when directly relevant, never as boilerplate. Be warm and natural, never stiff. Rules:",
     "1. Never invent data, sensors, measurements, or results. Use ONLY the snapshot below.",
@@ -187,7 +187,7 @@ function fallbackReply(ctx: ChatContext, calc: { net: number; excess: number; sh
   // Casual check-ins get varied human acknowledgments, never a status dump.
   // Elongated letters (كييف، هلااا) are normalized for intent matching only.
   const qNorm = q.replace(/([اوي])\1+/g, "$1");
-  if (/(تسمعني|سامعني|اسمع|ياخي|كيفك|كيف الحال|كيف حالك|شلونك|وشلونك|عساك بخير|وش الاخبار|وش اخبارك|وش علومك|عساك طيب|وش مسوي|تمام|شخبارك|وش اخبارك|هلا|اهلا|أهلين|ياهلا|حياك|مرحبا|صباح الخير|مساء الخير|السلام|هاي|رد|ردد|do you hear|how are you|you there|are you listening|hello|hi|hey|good morning|good evening|what.?s up)/.test(qNorm)) {
+  if (/(تسمعني|سامعني|اسمع|ياخي|كيفك|كيف الحال|كيف حالك|شلونك|وشلونك|عساك بخير|وش الاخبار|وش اخبارك|وش علومك|عساك طيب|وش مسوي|تمام|شخبارك|وش اخبارك|هلا|اهلا|أهلين|ياهلا|حياك|مرحبا|صباح الخير|مساء الخير|السلام|هاي|رد|ردد|الله يسعدك|يسعدك|يعطيك العافية|يعافيك|تسلم|يسلمك|حي الله|هلا فيك|أهلين فيك|do you hear|how are you|you there|are you listening|hello|hi|hey|good morning|good evening|what.?s up)/.test(qNorm)) {
     const greetAr = [
       `هلا وغلا فيك! طاقتك اليوم ممتازة — فائض ${calc.excess}W وبطارية ${s.battery.levelPercent}%. آمرني!`,
       `أهلين وسهلين! الشمس شغالة والإنتاج ${s.solarProductionW}W — وش تبي تعرف؟`,
@@ -200,7 +200,12 @@ function fallbackReply(ctx: ChatContext, calc: { net: number; excess: number; sh
     const glist = ar ? greetAr : greetEn;
     return glist[[...qNorm].reduce((a, c) => a + (c.codePointAt(0) ?? 0), 0) % glist.length] ?? glist[0];
   }
-  // Conditional "what if battery full?" gets a conditional answer.
+  // Dialect requests (أبغى/أبي/تكفى...) get a helpful energy-tied answer.
+  if (/(أبغى|أبي|ابغى|ابي|احتاج|أحتاج|تكفى|تكفين|ياليت|ياليت|لو سمحت|ممكن|I want|I need|please|can you)/.test(qNorm)) {
+    return ar
+      ? `أبشر! قل لي وش تبي بالضبط — فائضك الحالي ${calc.excess}W وبطاريتك ${s.battery.levelPercent}%، وأنا أرتب لك أفضل استخدام له.`
+      : `Of course! Tell me exactly what you need — your current surplus is ${calc.excess}W, battery ${s.battery.levelPercent}%, and I'll arrange the best use for it.`;
+  }
   if (/(امتلأت|مليانة|متروسة|فل|full|fills up|100%)/.test(q) && /(بطار|battery)/.test(q)) {
     return ar
       ? `لو امتلأت البطارية فعلًا، تتحول الأولوية للسيارة الكهربائية ثم للأحمال الإضافية. حاليًا بطاريتك عند ${s.battery.levelPercent}% فقط، لذلك ${where} هو الصحيح الآن.`
@@ -218,7 +223,14 @@ function fallbackReply(ctx: ChatContext, calc: { net: number; excess: number; sh
       : ` Temperature in ${weather.place} is ${weather.tempC}C, humidity ${weather.humidityPct ?? "n/a"}%, rain probability today ${weather.rainTodayPct ?? "n/a"}% and tomorrow ${weather.rainTomorrowPct ?? "n/a"}%. (City data, not a sensor reading).`
     : "";
   // Weather questions get the FULL reading first, no system dump.
+  // If no city was named, say which city the reading belongs to and invite another.
   if (/(حرارة|طقس|مطر|غيم|رطوبة|هطول|temp|weather|rain|humid|precipitation)/.test(q)) {
+    const named = /(جدة|الرياض|مكة|المدينة|الدمام|الخبر|الشرقية|أبها|ابها|تبوك|بريدة|بريده|حائل|جازان|جيزان|نجران|الطائف|الطايف|ينبع|jeddah|riyadh|mecca|makkah|medina|dammam|khobar|abha|tabuk|hail|jazan|najran|taif|yanbu)/i.test(q);
+    if (!named && weather) {
+      return ar
+        ? `هذه قراءة ${weather.place} كمثال: ${tempLine.trim()} قل لي اسم مدينتك وأعطيك قراءتها فورًا.`
+        : `This is a ${weather.place} reading as an example: ${tempLine.trim()} Tell me your city and I'll fetch it right away.`;
+    }
     return `${tempLine.trim()}`;
   }
   // Warnings questions get the live warnings list, computed from state.
