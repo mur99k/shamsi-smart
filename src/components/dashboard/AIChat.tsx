@@ -10,21 +10,21 @@ export default function AIChat() {
   const box = useRef<HTMLDivElement>(null);
   const field = useRef<HTMLTextAreaElement>(null);
   const ar = lang === "ar";
-  // Typewriter reveal for the newest assistant reply: masks thinking latency.
+  // Typewriter reveal, word by word at a human hand pace, for the newest reply.
   const [typed, setTyped] = useState<Record<number, number>>({});
   useEffect(() => {
     const i = messages.length - 1;
     const m = messages[i];
     if (!m || m.role !== "assistant" || m.error) return;
-    const full = m.content.length;
-    if ((typed[i] ?? 0) >= full) return;
+    const words = m.content.split(/(\s+)/).length;
+    if ((typed[i] ?? 0) >= words) return;
     const id = window.setTimeout(() => {
       if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-        setTyped(t => (t[i] === full ? t : { ...t, [i]: full }));
+        setTyped(t => (t[i] === words ? t : { ...t, [i]: words }));
       } else {
-        setTyped(t => ({ ...t, [i]: Math.min(full, (t[i] ?? 0) + 28) }));
+        setTyped(t => ({ ...t, [i]: Math.min(words, (t[i] ?? 0) + 2) }));
       }
-    }, 35);
+    }, 130);
     return () => window.clearTimeout(id);
   }, [messages, typed]);
   useEffect(() => { box.current?.scrollTo({ top: box.current.scrollHeight }); }, [messages, chatLoading]);
@@ -40,9 +40,12 @@ export default function AIChat() {
     <div ref={box} className="chat-history" role="log" aria-live="polite" aria-relevant="additions" aria-busy={chatLoading}>
       {!messages.length && <div className="chat-empty"><h3>{ar ? "ما سؤالك عن حالة الطاقة؟" : "What would you like to know?"}</h3><p>{ar ? "الإنتاج والاستهلاك وحالة البطارية جاهزة للنقاش." : "Solar output, consumption and battery state are ready to discuss."}</p></div>}
       {messages.map((message, index) => {
-        const shown = message.role === "assistant" && !message.error ? (typed[index] ?? message.content.length) : message.content.length;
-        const typing = message.role === "assistant" && !message.error && shown < message.content.length;
-        return <article key={index} className={`message ${message.role}`}><div className="message-meta"><strong>{message.role === "user" ? (ar ? "أنت" : "You") : message.error ? (ar ? "تعذر الرد" : "No reply") : (ar ? "المساعد" : "Assistant")}</strong></div><div className="bubble" dir={message.role === "user" ? (/[\u0600-\u06FF]/.test(message.content) ? "rtl" : "ltr") : undefined}>{message.role === "assistant" && !message.error && <Sparkles size={15} className="bubble-icon" aria-hidden="true" />}<p dir="auto" className={message.error ? "error-text" : ""}>{message.content.slice(0, shown)}{typing ? "▍" : ""}</p></div>{message.role === "assistant" && !message.error && message.decision && <div className="bubble-badges"><span className="badge">{ar ? ACTION_META[message.decision].labelAr : ACTION_META[message.decision].labelEn}</span></div>}</article>; })}
+        const parts = message.role === "assistant" && !message.error ? message.content.split(/(\s+)/) : null;
+        const isNewest = index === messages.length - 1;
+        const shown = parts ? (typed[index] ?? (isNewest ? 0 : parts.length)) : message.content.length;
+        const text = parts ? parts.slice(0, shown).join("") : message.content;
+        const typing = !!parts && shown < parts.length;
+        return <article key={index} className={`message ${message.role}`}><div className="message-meta"><strong>{message.role === "user" ? (ar ? "أنت" : "You") : message.error ? (ar ? "تعذر الرد" : "No reply") : (ar ? "المساعد" : "Assistant")}</strong></div><div className="bubble" dir={message.role === "user" ? (/[\u0600-\u06FF]/.test(message.content) ? "rtl" : "ltr") : undefined}>{message.role === "assistant" && !message.error && <Sparkles size={15} className="bubble-icon" aria-hidden="true" />}<p dir="auto" className={message.error ? "error-text" : ""}>{text}{typing ? "▍" : ""}</p></div>{message.role === "assistant" && !message.error && message.decision && <div className="bubble-badges"><span className="badge">{ar ? ACTION_META[message.decision].labelAr : ACTION_META[message.decision].labelEn}</span></div>}</article>; })}
       {chatLoading && <div className="chat-loading" role="status"><LoaderCircle className="spin" size={18} /><span className="typing" aria-hidden="true"><span /><span /><span /></span>{ar ? "جارٍ إعداد الرد على الحالة المرسلة..." : "Preparing a reply for the submitted state..."}</div>}
     </div>
     <div className="chat-dock">

@@ -324,8 +324,11 @@ export async function chatReply(ctx: ChatContext): Promise<{
   const apiKey = process.env.CODEX_API_KEY?.trim();
   const apiBase = process.env.CODEX_API_URL?.trim();
   const model = process.env.CODEX_MODEL?.trim() || "gpt-4o-mini";
+  const lastText = ctx.messages.filter(m => m.role === "user").slice(-1)[0]?.content.toLowerCase() ?? "";
+  // Weather fetch only when the question touches weather/climate/cities — saves ~1s otherwise.
+  const needsWeather = /(حرارة|طقس|مطر|غيم|رطوبة|هطول|مدينة|مناخ|temp|weather|rain|humid|precipitation|climate|jeddah|riyadh|mecca|makkah|medina|dammam|khobar|abha|tabuk|hail|jazan|najran|taif|yanbu|جدة|الرياض|مكة|المدينة|الدمام|الخبر|الشرقية|أبها|ابها|تبوك|بريدة|بريده|حائل|جازان|جيزان|نجران|الطائف|الطايف|ينبع)/.test(lastText);
   const city = detectCity(ctx.messages);
-  const weather = await fetchCityWeather(city.lat, city.lon, city.place);
+  const weather = needsWeather ? await fetchCityWeather(city.lat, city.lon, city.place) : null;
   if (!apiKey || !apiBase) {
     return { reply: fallbackReply(ctx, calculated, weather), source: "fallback", calculated };
   }
