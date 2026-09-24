@@ -113,9 +113,11 @@ function buildChatSystemPrompt(
   weather: LiveWeather | null,
 ): string {
   return [
-    "You are SolarWise, a friendly and sharp home-energy companion inside a solar-energy prototype dashboard (SIMULATION — no real hardware is connected unless the UI explicitly shows ESP32 live mode).",
-    "ANSWER THE QUESTION FIRST, DIRECTLY. The snapshot below is HIDDEN context for grounding only — use its numbers solely when relevant to the question. NEVER open a reply by restating production/consumption/battery/surplus unless the user explicitly asked for the system state. No boilerplate preambles, ever.",
-    "You discuss the SAME live system snapshot shown on screen. Be warm, natural, and conversational — like a knowledgeable friend, never stiff or robotic. Rules:",
+    "You are SolarWise AI, a smart, conversational, and context-aware assistant for a smart solar management system.",
+    "Answer ANY user question dynamically and naturally in the user's language (Arabic or English, matching what they wrote). NEVER copy-paste a fixed status block.",
+    "If the user asks off-topic/casual questions (e.g. jokes, food preferences), give a brief friendly answer, then smoothly steer the conversation back to solar energy and system status.",
+    "Here is the live system context (hidden grounding data — use it ONLY when answering or naturally steering):",
+    "This build is software simulation unless the UI explicitly shows ESP32 live mode; say so only when directly relevant, never as boilerplate. Be warm and natural, never stiff. Rules:",
     "1. Never invent data, sensors, measurements, or results. Use ONLY the snapshot below.",
     "2. If hardware is mentioned, state clearly this build is software simulation; hardware (ESP32/Arduino/sensors) is a planned future stage, not present.",
     "3. Never claim measured savings, efficiency gains, or accuracy metrics. Model confidence is not scientific accuracy.",
@@ -182,11 +184,11 @@ function fallbackReply(ctx: ChatContext, calc: { net: number; excess: number; sh
   const summary = ar
     ? `الفائض ${calc.excess}W والبطارية عند ${s.battery.levelPercent}%، والتوصية: ${where}.`
     : `Surplus is ${calc.excess}W, battery at ${s.battery.levelPercent}%, recommendation: ${where}.`;
-  // Greetings get a greeting, not a status dump.
-  if (/^(هلا|هلا والله|السلام عليكم|السلام|مرحبا|اهلا|صباح الخير|مساء الخير|هاي|hello|hi|hey|good morning|good evening|how are you|كيف حالك|كيفك|شلونك)[\s!؟?.]*$/.test(q.trim())) {
+  // Casual check-ins get a human acknowledgment, never a status dump.
+  if(/(تسمعني|سامعني|كيفك|كيف حالك|شلونك|تمام|شخبارك|وش اخبارك|do you hear|how are you|you there|are you listening)/.test(q)) {
     return ar
-      ? `هلا فيك! أنا مساعد SolarWise. ${summary} اسألني عن أي شيء في النظام.`
-      : `Hello! I'm the SolarWise assistant. ${summary} Ask me anything about the system.`;
+      ? "نعم أسمعك بوضوح! جاهز أساعدك في متابعة طاقتك الشمسية اليوم — كيف أقدر أخدمك؟"
+      : "Yes, I hear you loud and clear! Ready to help with your solar energy today — how can I help?";
   }
   // Conditional "what if battery full?" gets a conditional answer.
   if (/(امتلأت|مليانة|متروسة|فل|full|fills up|100%)/.test(q) && /(بطار|battery)/.test(q)) {
@@ -218,9 +220,22 @@ function fallbackReply(ctx: ChatContext, calc: { net: number; excess: number; sh
     if (warns.length === 0) return ar ? "لا توجد تحذيرات حاليًا — النظام يعمل ضمن الحدود الطبيعية." : "No warnings right now — the system is within normal limits.";
     return (ar ? "التحذيرات الحالية: " : "Current warnings: ") + warns.join(ar ? "؛ " : "; ");
   }
-  return ar
-    ? `حالة النظام الآن: الإنتاج ${s.solarProductionW}W والاستهلاك ${s.consumptionW}W، والصافي ${calc.net >= 0 ? "+" : ""}${calc.net}W (${calc.status}). البطارية عند ${s.battery.levelPercent}%. التوصية الحالية: ${where}.`
-    : `Current state: production ${s.solarProductionW}W, consumption ${s.consumptionW}W, net ${calc.net >= 0 ? "+" : ""}${calc.net}W (${calc.status}). Battery at ${s.battery.levelPercent}%. Current recommendation: ${where}.`;
+  // Anything else off-script: brief friendly touch + natural steer to live numbers.
+  // Templates rotate by question hash so no two different questions get identical replies.
+  const bridgesAr = [
+    `سؤال حلو! وبمناسبة الكلام، طاقة بيتك اليوم ممتازة — عندك فائض ${calc.excess}W، تحب نستخدمه لشحن البطارية (عند ${s.battery.levelPercent}%) أو التكييف؟`,
+    `ههه، خليني أجاوبك بصراحة ثم نرجع لموضوعنا الأحلى: الشمس. إنتاجك ${s.solarProductionW}W واستهلاكك ${s.consumptionW}W، يعني فائض ${calc.excess}W جاهز — أصرفه على إيه برأيك؟`,
+    `تمام، فهمت قصدك! وبما إننا هنا: بطاريتك عند ${s.battery.levelPercent}% والفائض ${calc.excess}W — تبي نجهزها لليل ولا نشغل حمل الآن؟`,
+  ];
+  const bridgesEn = [
+    `Good question! Speaking of which, your home energy looks great today — ${calc.excess}W surplus. Shall we use it to charge the battery (${s.battery.levelPercent}%) or run cooling?`,
+    `Ha, honestly answered! Back to our favorite topic: the sun. You're producing ${s.solarProductionW}W against ${s.consumptionW}W, so ${calc.excess}W surplus is ready — what shall we spend it on?`,
+    `Got it! And since we're here: battery at ${s.battery.levelPercent}% with ${calc.excess}W surplus — save it for tonight or run a load now?`,
+  ];
+  const list = ar ? bridgesAr : bridgesEn;
+  const pick = list[[...q].reduce((a, c) => a + (c.codePointAt(0) ?? 0), 0) % list.length] ?? list[0];
+  const topic = last.slice(0, 60);
+  return ar ? `${topic ? `«${topic}» — ` : ""}${pick}` : `${topic ? `"${topic}" — ` : ""}${pick}`;
 }
 
 export async function chatReply(ctx: ChatContext): Promise<{
