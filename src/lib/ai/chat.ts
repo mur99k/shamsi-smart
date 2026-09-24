@@ -186,7 +186,7 @@ function fallbackReply(ctx: ChatContext, calc: { net: number; excess: number; sh
   // Casual check-ins get varied human acknowledgments, never a status dump.
   // Elongated letters (كييف، هلااا) are normalized for intent matching only.
   const qNorm = q.replace(/([اوي])\1+/g, "$1");
-  if (/(تسمعني|سامعني|كيفك|كيف الحال|كيف حالك|شلونك|وشلونك|عساك بخير|تمام|شخبارك|وش اخبارك|هلا|اهلا|أهلين|ياهلا|حياك|مرحبا|صباح الخير|مساء الخير|السلام|هاي|do you hear|how are you|you there|are you listening|hello|hi|hey|good morning|good evening)/.test(qNorm)) {
+  if (/(تسمعني|سامعني|كيفك|كيف الحال|كيف حالك|شلونك|وشلونك|عساك بخير|وش الاخبار|وش اخبارك|وش علومك|عساك طيب|وش مسوي|تمام|شخبارك|وش اخبارك|هلا|اهلا|أهلين|ياهلا|حياك|مرحبا|صباح الخير|مساء الخير|السلام|هاي|do you hear|how are you|you there|are you listening|hello|hi|hey|good morning|good evening|what.?s up)/.test(qNorm)) {
     const greetAr = [
       `هلا وغلا فيك! طاقتك اليوم ممتازة — فائض ${calc.excess}W وبطارية ${s.battery.levelPercent}%. آمرني!`,
       `أهلين وسهلين! الشمس شغالة والإنتاج ${s.solarProductionW}W — وش تبي تعرف؟`,
