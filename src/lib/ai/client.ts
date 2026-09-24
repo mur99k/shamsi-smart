@@ -15,7 +15,7 @@ if (typeof window !== "undefined") {
   throw new Error("lib/ai/client is server-only — never import from Client Components.");
 }
 
-const TIMEOUT_MS = 15000;
+const TIMEOUT_MS = 20000;
 
 const DECISION_JSON_SCHEMA = {
   name: "energy_decision",

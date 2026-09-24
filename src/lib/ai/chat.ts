@@ -184,10 +184,12 @@ function fallbackReply(ctx: ChatContext, calc: { net: number; excess: number; sh
   const summary = ar
     ? `الفائض ${calc.excess}W والبطارية عند ${s.battery.levelPercent}%، والتوصية: ${where}.`
     : `Surplus is ${calc.excess}W, battery at ${s.battery.levelPercent}%, recommendation: ${where}.`;
-  // Casual check-ins get varied human acknowledgments, never a status dump.
-  // Elongated letters (كييف، هلااا) are normalized for intent matching only.
+  // Casual check-ins get varied human acknowledgments — but ONLY when the
+  // message carries no other substance (a greeting + real question goes to intent handling).
   const qNorm = q.replace(/([اوي])\1+/g, "$1");
-  if (/(تسمعني|سامعني|اسمع|ياخي|كيفك|كيف الحال|كيف حالك|شلونك|وشلونك|عساك بخير|وش الاخبار|وش اخبارك|وش علومك|عساك طيب|وش مسوي|تمام|شخبارك|وش اخبارك|هلا|اهلا|أهلين|ياهلا|حياك|مرحبا|صباح الخير|مساء الخير|السلام|هاي|رد|ردد|الله يسعدك|يسعدك|يعطيك العافية|يعافيك|تسلم|يسلمك|حي الله|هلا فيك|أهلين فيك|do you hear|how are you|you there|are you listening|hello|hi|hey|good morning|good evening|what.?s up)/.test(qNorm)) {
+  const greetRe = /(تسمعني|سامعني|اسمع|ياخي|كيفك|كيف الحال|كيف حالك|شلونك|وشلونك|عساك بخير|وش الاخبار|وش اخبارك|وش علومك|عساك طيب|وش مسوي|تمام|شخبارك|وش اخبارك|هلا|اهلا|أهلين|ياهلا|حياك|مرحبا|صباح الخير|مساء الخير|السلام|هاي|رد|ردد|الله يسعدك|يسعدك|يعطيك العافية|يعافيك|تسلم|يسلمك|حي الله|هلا فيك|أهلين فيك|do you hear|how are you|you there|are you listening|hello|hi|hey|good morning|good evening|what.?s up)/;
+  const remainder = qNorm.replace(new RegExp(greetRe.source, "g"), "").replace(/[^؀-ۿa-zA-Z]/g, "");
+  if (greetRe.test(qNorm) && remainder.length <= 6) {
     const greetAr = [
       `هلا وغلا فيك! طاقتك اليوم ممتازة — فائض ${calc.excess}W وبطارية ${s.battery.levelPercent}%. آمرني!`,
       `أهلين وسهلين! الشمس شغالة والإنتاج ${s.solarProductionW}W — وش تبي تعرف؟`,
