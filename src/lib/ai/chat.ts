@@ -114,6 +114,7 @@ function buildChatSystemPrompt(
 ): string {
   return [
     "You are SolarWise, a friendly and sharp home-energy companion inside a solar-energy prototype dashboard (SIMULATION — no real hardware is connected unless the UI explicitly shows ESP32 live mode).",
+    "ANSWER THE QUESTION FIRST, DIRECTLY. The snapshot below is HIDDEN context for grounding only — use its numbers solely when relevant to the question. NEVER open a reply by restating production/consumption/battery/surplus unless the user explicitly asked for the system state. No boilerplate preambles, ever.",
     "You discuss the SAME live system snapshot shown on screen. Be warm, natural, and conversational — like a knowledgeable friend, never stiff or robotic. Rules:",
     "1. Never invent data, sensors, measurements, or results. Use ONLY the snapshot below.",
     "2. If hardware is mentioned, state clearly this build is software simulation; hardware (ESP32/Arduino/sensors) is a planned future stage, not present.",
@@ -133,6 +134,7 @@ function buildChatSystemPrompt(
     "16. Be load-aware: heat → cooling loads (AC) dominate; cool weather → heating loads (water/space heaters) dominate. Tie the advice to the available loads and the current surplus or shortage, not to generic tips.",
     "17. Vary your phrasing: never open every reply with the same snapshot restatement. Mention the key numbers once per reply at most, briefly, only when relevant. Mention the simulation nature only when the question touches reality-vs-simulation — never as boilerplate.",
     "18. Greetings get one warm line plus at most one playful energy touch (e.g. morning sun). Topical chit-chat (food, sport, advice, jokes) gets a genuine 1-2 sentence answer first, then exactly one natural bridge sentence tied to the CURRENT snapshot numbers — fresh wording each time, never a template.",
+    "19. Intent-first answers: warnings questions → list the live warnings immediately (low battery, extreme heat, shortage, curtailment risk), no preamble. Weather sub-questions → lead with that exact metric (humidity %, rain % today/tomorrow, temperature) from the snapshot, then at most one short energy tie-in. General greetings → brief warmth only, no energy data unless asked.",
     "",
     "CURRENT SYSTEM SNAPSHOT (live, authoritative):",
     `solarProductionW=${state.solarProductionW}, consumptionW=${state.consumptionW}, netEnergyW=${net}, excessEnergyW=${excess}, energyShortageW=${shortage}, status=${status}`,
@@ -200,14 +202,21 @@ function fallbackReply(ctx: ChatContext, calc: { net: number; excess: number; sh
   }
   const tempLine = weather
     ? ar
-      ? ` درجة الحرارة الخارجية في ${weather.place} الآن ${weather.tempC}°م (بيانات مدينة، وليست قراءة حساس).`
-      : ` Outdoor temperature in ${weather.place} is ${weather.tempC}C right now (city data, not a sensor reading).`
+      ? ` درجة الحرارة في ${weather.place} الآن ${weather.tempC}°م، والرطوبة ${weather.humidityPct ?? "غير متاحة"}%، واحتمال المطر اليوم ${weather.rainTodayPct ?? "غير متاح"}% وغدًا ${weather.rainTomorrowPct ?? "غير متاح"}%. (بيانات مدينة، وليست قراءة حساس).`
+      : ` Temperature in ${weather.place} is ${weather.tempC}C, humidity ${weather.humidityPct ?? "n/a"}%, rain probability today ${weather.rainTodayPct ?? "n/a"}% and tomorrow ${weather.rainTomorrowPct ?? "n/a"}%. (City data, not a sensor reading).`
     : "";
-  // Weather questions lead with weather.
-  if (/(حرارة|طقس|مطر|غيم|رطوبة|temp|weather|rain|humid)/.test(q)) {
-    return ar
-      ? `${tempLine.trim()} ${summary}`
-      : `${tempLine.trim()} ${summary}`;
+  // Weather questions get the FULL reading first, no system dump.
+  if (/(حرارة|طقس|مطر|غيم|رطوبة|هطول|temp|weather|rain|humid|precipitation)/.test(q)) {
+    return `${tempLine.trim()}`;
+  }
+  // Warnings questions get the live warnings list, computed from state.
+  if (/(تحذير|تنبيه|مشكلة|مشاكل|خطر|عطل|warning|alert|problem|issue|fault)/.test(q)) {
+    const warns: string[] = [];
+    if (s.battery.available && s.battery.levelPercent <= 25) warns.push(ar ? `مستوى البطارية منخفض (${s.battery.levelPercent}%)` : `Battery level low (${s.battery.levelPercent}%)`);
+    if (weather && weather.tempC >= 35) warns.push(ar ? `حرارة مرتفعة (${weather.tempC}°م) قد تقلل الإنتاج وترفع التكييف` : `High heat (${weather.tempC}C) may cut output and raise cooling load`);
+    if (calc.shortage > 0) warns.push(ar ? `عجز طاقة ${calc.shortage}W — الاستهلاك أعلى من الإنتاج` : `Energy shortage of ${calc.shortage}W — demand exceeds production`);
+    if (warns.length === 0) return ar ? "لا توجد تحذيرات حاليًا — النظام يعمل ضمن الحدود الطبيعية." : "No warnings right now — the system is within normal limits.";
+    return (ar ? "التحذيرات الحالية: " : "Current warnings: ") + warns.join(ar ? "؛ " : "; ");
   }
   return ar
     ? `حالة النظام الآن: الإنتاج ${s.solarProductionW}W والاستهلاك ${s.consumptionW}W، والصافي ${calc.net >= 0 ? "+" : ""}${calc.net}W (${calc.status}). البطارية عند ${s.battery.levelPercent}%. التوصية الحالية: ${where}.`
