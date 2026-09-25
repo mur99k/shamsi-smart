@@ -165,9 +165,9 @@ export function stripMarkdown(text: string): string {
     .replace(/\n{2,}/g, "\n")
     .trim();
 }
-/** Deterministic local answer when the AI is unreachable (never crashes).
- * It understands the question type so it never parrots one canned reply. */
-export function fallbackReply(ctx: ChatContext, calc: { net: number; excess: number; shortage: number; status: string }, weather: LiveWeather | null): string {
+/** Intent-matched local answer. Returns null when no local intent covers
+ * the question — the caller should then try the AI provider. */
+export function localIntentReply(ctx: ChatContext, calc: { net: number; excess: number; shortage: number; status: string }, weather: LiveWeather | null): string | null {
   const s = ctx.state;
   const ar = ctx.lang === "ar";
   const last = ctx.messages.filter(m => m.role === "user").slice(-1)[0]?.content ?? "";
@@ -303,9 +303,16 @@ export function fallbackReply(ctx: ChatContext, calc: { net: number; excess: num
       : `Let's get back to our main topic — your solar: ${calc.excess}W surplus, battery ${s.battery.levelPercent}%. Use it for charging or run a load?`;
   }
   // Anything else off-script: one natural pivot, never echoing the user's words.
-  return ar
+  // No local intent matched — caller falls through to the AI provider.
+  return null;
+}
+
+/** Deterministic local answer when the AI is unreachable (never crashes). */
+export function fallbackReply(ctx: ChatContext, calc: { net: number; excess: number; shortage: number; status: string }, weather: LiveWeather | null): string {
+  const ar = ctx.lang === "ar";
+  return localIntentReply(ctx, calc, weather) ?? (ar
     ? `وصلت رسالتك! أنا مساعد SolarWise للطاقة الشمسية — اسألني عن الفائض أو البطارية أو طقس مدينتك، وسأجيبك فورًا.`
-    : `Got your message! I'm the SolarWise solar assistant — ask me about surplus, battery, or your city's weather and I'll answer right away.`;
+    : `Got your message! I'm the SolarWise solar assistant — ask me about surplus, battery, or your city's weather and I'll answer right away.`);
 }
 
 /** Shared preparation for streaming and non-streaming chat paths. */
@@ -347,6 +354,9 @@ export async function chatReply(ctx: ChatContext): Promise<{
   calculated: { net: number; excess: number; shortage: number; status: string };
 }> {
   const prep = await prepareChat(ctx);
+  // FAST PATH: covered intents answer instantly (<300ms), provider only for the rest.
+  const instant = localIntentReply(ctx, prep.calculated, prep.weather);
+  if (instant) return { reply: instant, source: "fallback" as const, calculated: prep.calculated };
   const { apiKey, apiBase, model, history, system, weather, calculated } = prep;
   if (!apiKey || !apiBase) {
     return { reply: fallbackReply(ctx, calculated, weather), source: "fallback", calculated };

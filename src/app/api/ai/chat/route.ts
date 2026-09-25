@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prepareChat, fallbackReply, stripMarkdown, type ChatMessage } from "@/lib/ai/chat";
+import { prepareChat, fallbackReply, stripMarkdown, localIntentReply, type ChatMessage } from "@/lib/ai/chat";
 import { fallbackDecide } from "@/lib/ai/fallback";
 import { resolveEndpoints, streamChatTokens } from "@/lib/ai/client";
 import type { ApiError, DecisionRequest, RecommendedAction } from "@/types/energy";
@@ -114,6 +114,13 @@ export async function POST(req: Request) {
           send({ fallback: true, reply: fallbackReply(withDecision, prep.calculated, prep.weather), source: "fallback", calculated: prep.calculated });
         };
         try {
+          // FAST PATH first: covered intents stream back instantly word by word.
+          const instant = localIntentReply(ctx, prep.calculated, prep.weather);
+          if (instant) {
+            for (const chunk of instant.match(/(\S+\s*)/g) ?? [instant]) send({ token: chunk });
+            send({ done: true, source: "fallback", calculated: prep.calculated, reply: instant });
+            return;
+          }
           if (!prep.apiKey || !prep.apiBase) {
             sendFallback();
           } else {
