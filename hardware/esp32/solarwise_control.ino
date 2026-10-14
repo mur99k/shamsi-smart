@@ -11,12 +11,12 @@
  *   - DHT sensor library         (DHT11 temperature + humidity)
  *   - ArduinoJson  (v7)          (parse the command response safely)
  *
- * WIRING
+ * WIRING (matches the SolarWise build — verify against YOUR board)
  *   I2C  : SDA=GPIO21, SCL=GPIO22
- *   INA219: 0x40 solar | 0x41 battery (bridge A0) | 0x44 loads (bridges A0+A1)
+ *   INA219: 0x41 solar panel | 0x40 battery | 0x44 load circuit
  *   BH1750: 0x23
  *   DHT11 : GPIO4
- *   Relays (active-LOW modules): battery=GPIO16, EV=GPIO17, loads=GPIO5
+ *   Relay : GPIO19 (single channel, ACTIVE-LOW module) -> load circuit
  *
  * SAFETY MODEL (monitoring + supervised control only):
  *   1. Every relay starts OFF on boot.
@@ -56,15 +56,19 @@ const unsigned long WIFI_FAILSAFE_MS      = 60000;  // 1 min offline -> relays O
 #define I2C_SCL 22
 #define DHT_PIN 4
 #define DHT_TYPE DHT11
-#define RELAY_BATTERY 16
-#define RELAY_EV      17
-#define RELAY_LOADS   5
+// Single-relay build: only the load circuit is switchable today.
+// The command channel still accepts battery/ev ids so a future multi-relay
+// board works without firmware changes — unwired ids are acknowledged and
+// ignored with a clear log line.
+#define RELAY_LOADS   19
+#define RELAY_BATTERY (-1)
+#define RELAY_EV      (-1)
 // Most relay boards are active-LOW. Flip if yours is active-HIGH.
 const int RELAY_ON  = LOW;
 const int RELAY_OFF = HIGH;
 
-Adafruit_INA219 inaSolar(0x40);
-Adafruit_INA219 inaBattery(0x41);
+Adafruit_INA219 inaSolar(0x41);
+Adafruit_INA219 inaBattery(0x40);
 Adafruit_INA219 inaLoads(0x44);
 BH1750 lightMeter(0x23);
 DHT dht(DHT_PIN, DHT_TYPE);
@@ -73,23 +77,34 @@ unsigned long seq = 0, lastTelemetry = 0, lastCommandPoll = 0, lastCommandAt = 0
 bool wifiWasUp = false;
 
 // --------------------------- Relay helpers ---------------------------------
+// Relay id -> pin.  -1 = known id but NOT wired on this board,  -2 = unknown id.
 int relayPin(const char* relay) {
   if (strcmp(relay, "battery") == 0) return RELAY_BATTERY;
   if (strcmp(relay, "ev") == 0) return RELAY_EV;
   if (strcmp(relay, "loads") == 0) return RELAY_LOADS;
-  return -1;
+  return -2;
+}
+
+void writeRelay(int pin, bool on) {
+  if (pin < 0) return;                       // not installed — nothing to drive
+  digitalWrite(pin, on ? RELAY_ON : RELAY_OFF);
 }
 
 void allRelaysOff(const char* why) {
-  digitalWrite(RELAY_BATTERY, RELAY_OFF);
-  digitalWrite(RELAY_EV, RELAY_OFF);
-  digitalWrite(RELAY_LOADS, RELAY_OFF);
+  writeRelay(RELAY_BATTERY, false);
+  writeRelay(RELAY_EV, false);
+  writeRelay(RELAY_LOADS, false);
   Serial.print(F("[relay] ALL OFF — ")); Serial.println(why);
 }
 
 void applyRelay(const char* relay, bool on) {
   const int pin = relayPin(relay);
-  if (pin < 0) { Serial.println(F("[relay] unknown relay, ignored")); return; }
+  if (pin == -2) { Serial.println(F("[relay] unknown relay id — ignored")); return; }
+  if (pin < 0) {
+    Serial.print(F("[relay] ")); Serial.print(relay);
+    Serial.println(F(" relay is not installed on this build — acknowledged, ignored"));
+    return;
+  }
   digitalWrite(pin, on ? RELAY_ON : RELAY_OFF);
   Serial.print(F("[relay] ")); Serial.print(relay);
   Serial.println(on ? F(" = ON") : F(" = OFF"));
@@ -193,9 +208,9 @@ void pollCommands() {
 void setup() {
   Serial.begin(115200);
   delay(300);
-  pinMode(RELAY_BATTERY, OUTPUT);
-  pinMode(RELAY_EV, OUTPUT);
-  pinMode(RELAY_LOADS, OUTPUT);
+  if (RELAY_BATTERY >= 0) pinMode(RELAY_BATTERY, OUTPUT);
+  if (RELAY_EV >= 0) pinMode(RELAY_EV, OUTPUT);
+  if (RELAY_LOADS >= 0) pinMode(RELAY_LOADS, OUTPUT);
   allRelaysOff("boot");
 
   Wire.begin(I2C_SDA, I2C_SCL);
