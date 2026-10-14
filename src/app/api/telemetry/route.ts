@@ -18,10 +18,22 @@ declare global {
 }
 if (globalThis.__solarLatestTelemetry === undefined) globalThis.__solarLatestTelemetry = null;
 
+/** When DEVICE_TOKEN is configured, devices must present it (x-device-token).
+ * Unset = open prototype mode (local demos, tests). The browser GET below
+ * stays open because the dashboard reads the latest reading, not the device. */
+function deviceAuthorized(request: Request): boolean {
+  const token = process.env.DEVICE_TOKEN?.trim();
+  if (!token) return true;
+  return request.headers.get("x-device-token") === token;
+}
+
 /** Future ESP32 ingress contract. It validates telemetry and remembers the
  * latest accepted reading for live display (with reported age). Device
  * authentication and durable persistence are still planned. */
 export async function POST(request: Request) {
+  if (!deviceAuthorized(request)) {
+    return NextResponse.json({ error: "UNAUTHORIZED", message: "Missing or invalid x-device-token." }, { status: 401 });
+  }
   const body = await request.json().catch(() => null) as Record<string, unknown> | null;
   const measurements = body?.measurements as Record<string, unknown> | undefined;
   if (!body || body.schemaVersion !== 1 || typeof body.deviceId !== "string" || typeof body.sequence !== "number" || typeof body.measuredAt !== "string" || body.source !== "hardware" || !measurements) {
