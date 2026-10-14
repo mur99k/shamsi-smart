@@ -165,12 +165,17 @@ void sendTelemetry() {
   j += "\"humidityPct\":"        + (!isnan(hum) ? String(hum, 0) : String("null"));
   j += "}}";
 
+  // USB / Web Serial path: one JSON object per line so the browser dashboard
+  // can read the SAME firmware over the cable with no WiFi at all.
+  Serial.println(j);
+  Serial.flush();
+
   HTTPClient http;
   http.begin(String(API_BASE) + "/api/telemetry");
   http.addHeader("Content-Type", "application/json");
   addAuth(http);
   const int code = http.POST(j);
-  Serial.printf("[telemetry] http=%d solar=%.1fW loads=%.1fW\n", code, solarW, loadsW);
+  Serial.printf("[log] telemetry http=%d solar=%.1fW loads=%.1fW\n", code, solarW, loadsW);
   http.end();
 }
 
