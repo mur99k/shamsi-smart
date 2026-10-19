@@ -18,6 +18,10 @@ export interface Message {
   live?: boolean;
 }
 
+/** Nordic UART Service — the de-facto BLE serial profile used by our ESP32. */
+const BLE_UART_SERVICE = "6e400001-b5a3-f393-e0a9-e50e24dcca9e";
+const BLE_UART_TX = "6e400003-b5a3-f393-e0a9-e50e24dcca9e";
+
 function useSolarState() {
   const [lang, setLang] = useState<Lang>("ar");
   const [sim, setSim] = useState<SimState>({ ...DEFAULT_SIM_STATE });
@@ -30,12 +34,17 @@ function useSolarState() {
   const [chatLoading, setChatLoading] = useState(false);
   const [dataMode, setDataMode] = useState<"simulation" | "hardware">("simulation");
   const [serialStatus, setSerialStatus] = useState<"unsupported" | "disconnected" | "connecting" | "connected">("disconnected");
+  const [bleStatus, setBleStatus] = useState<"unsupported" | "disconnected" | "connecting" | "connected">("disconnected");
+  const [bleReading, setBleReading] = useState<{ solarW: number; consumptionW: number; lux: number | null; tempC: number | null; relay: string | null } | null>(null);
   const [live, setLive] = useState<{ solarW: number; consumptionW: number; batteryPct: number | null; ageMs: number } | null>(null);
   const revision = useRef(0);
   const decisionRequest = useRef<AbortController | null>(null);
   const chatRequest = useRef<AbortController | null>(null);
   const serialReader = useRef<ReadableStreamDefaultReader<string> | null>(null);
   const serialAbort = useRef<AbortController | null>(null);
+  const bleDevice = useRef<BluetoothDeviceLike | null>(null);
+  const bleHandler = useRef<{ tx: BluetoothCharacteristicLike; onValue: (event: Event) => void } | null>(null);
+  const bleBuffer = useRef("");
 
   useEffect(() => {
     document.documentElement.lang = lang;
@@ -46,6 +55,8 @@ function useSolarState() {
     chatRequest.current?.abort();
     serialAbort.current?.abort();
     serialReader.current?.cancel().catch(() => undefined);
+    bleHandler.current?.tx.removeEventListener("characteristicvaluechanged", bleHandler.current.onValue);
+    bleDevice.current?.gatt?.disconnect();
   }, []);
   // Poll the latest accepted ESP32 reading; the homepage shows it when fresh.
   useEffect(() => {
@@ -142,6 +153,101 @@ function useSolarState() {
     serialReader.current = null;
     setSerialStatus("disconnected");
     setDataMode("simulation");
+  }
+
+  // ── Bluetooth (BLE UART) — the same JSON lines as USB, over the air ──
+  async function connectBluetooth() {
+    const bt = (navigator as Navigator & { bluetooth?: BluetoothLike }).bluetooth;
+    if (!bt) {
+      setBleStatus("unsupported");
+      return;
+    }
+    setBleStatus("connecting");
+    try {
+      const device = await bt.requestDevice({
+        filters: [{ services: [BLE_UART_SERVICE] }],
+        optionalServices: [BLE_UART_SERVICE],
+      });
+      if (!device.gatt) throw new Error("GATT unavailable");
+      const server = await device.gatt.connect();
+      const service = await server.getPrimaryService(BLE_UART_SERVICE);
+      const tx = await service.getCharacteristic(BLE_UART_TX);
+
+      bleDevice.current = device;
+      bleBuffer.current = "";
+
+      const onValue = (event: Event) => {
+        const value = (event.target as BluetoothCharacteristicLike).value;
+        if (!value) return;
+        bleBuffer.current += new TextDecoder().decode(value);
+        const lines = bleBuffer.current.split(/\r?\n/);
+        bleBuffer.current = lines.pop() ?? "";
+        for (const line of lines) {
+          try {
+            const reading = JSON.parse(line) as {
+              solarProductionW?: number; consumptionW?: number;
+              lightLux?: number; temperatureC?: number; relay?: string;
+            };
+            const change: Partial<SimState> = {};
+            if (Number.isFinite(reading.solarProductionW)) change.solarProductionW = Math.max(0, Math.round(reading.solarProductionW!));
+            if (Number.isFinite(reading.consumptionW)) change.consumptionW = Math.max(0, Math.round(reading.consumptionW!));
+            if (Object.keys(change).length) {
+              setSim(previous => ({ ...previous, ...change }));
+              setResult(null);
+            }
+            setBleReading({
+              solarW: Number.isFinite(reading.solarProductionW) ? reading.solarProductionW! : 0,
+              consumptionW: Number.isFinite(reading.consumptionW) ? reading.consumptionW! : 0,
+              lux: Number.isFinite(reading.lightLux) ? reading.lightLux! : null,
+              tempC: Number.isFinite(reading.temperatureC) ? reading.temperatureC! : null,
+              relay: typeof reading.relay === "string" ? reading.relay : null,
+            });
+          } catch { /* ignore partial / non-JSON BLE chunks */ }
+        }
+      };
+
+      tx.addEventListener("characteristicvaluechanged", onValue);
+      bleHandler.current = { tx, onValue };
+      await tx.startNotifications();
+
+      device.addEventListener("gattserverdisconnected", () => {
+        setBleStatus("disconnected");
+        setDataMode("simulation");
+      });
+
+      setBleStatus("connected");
+      setDataMode("hardware");
+    } catch {
+      setBleStatus("disconnected");
+      setDataMode("simulation");
+    }
+  }
+
+  function disconnectBluetooth() {
+    const handler = bleHandler.current;
+    if (handler) {
+      handler.tx.removeEventListener("characteristicvaluechanged", handler.onValue);
+      handler.tx.stopNotifications().catch(() => undefined);
+      bleHandler.current = null;
+    }
+    bleDevice.current?.gatt?.disconnect();
+    bleDevice.current = null;
+    setBleStatus("disconnected");
+    setBleReading(null);
+    setDataMode("simulation");
+  }
+
+  /** Send a relay command back to the ESP32 over the same BLE link. */
+  async function sendBluetoothCommand(relay: "loads", state: "on" | "off") {
+    const handler = bleHandler.current;
+    if (!handler) return false;
+    try {
+      const payload = JSON.stringify({ relay, state });
+      await handler.tx.writeValue(new TextEncoder().encode(payload));
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   function applyScenario(id: string) {
@@ -266,7 +372,8 @@ function useSolarState() {
 
   return { lang, setLang, sim, calc, scenarioId, patch, applyScenario, result, decision, loading, analysisError, analyze,
     messages, draft, setDraft, chatLoading, send, clearChat: () => { if (!chatRequest.current) setMessages([]); },
-    dataMode, serialStatus, connectSerial, disconnectSerial, live };
+    dataMode, serialStatus, connectSerial, disconnectSerial, live,
+    bleStatus, bleReading, connectBluetooth, disconnectBluetooth, sendBluetoothCommand };
 }
 
 const SolarContext = createContext<ReturnType<typeof useSolarState> | null>(null);
@@ -284,4 +391,32 @@ interface SerialPortLike {
   readable?: ReadableStream<Uint8Array>;
   open(options: { baudRate: number }): Promise<void>;
   close(): Promise<void>;
+}
+
+// Minimal Web Bluetooth typings (not in TypeScript's default DOM lib).
+interface BluetoothCharacteristicLike extends EventTarget {
+  value?: DataView | null;
+  startNotifications(): Promise<BluetoothCharacteristicLike>;
+  stopNotifications(): Promise<BluetoothCharacteristicLike>;
+  writeValue(value: BufferSource): Promise<void>;
+}
+interface BluetoothServiceLike {
+  getCharacteristic(uuid: string): Promise<BluetoothCharacteristicLike>;
+}
+interface BluetoothServerLike {
+  connected: boolean;
+  connect(): Promise<BluetoothServerLike>;
+  disconnect(): void;
+  getPrimaryService(uuid: string): Promise<BluetoothServiceLike>;
+}
+interface BluetoothDeviceLike extends EventTarget {
+  id: string;
+  name?: string;
+  gatt?: BluetoothServerLike;
+}
+interface BluetoothLike {
+  requestDevice(options: {
+    filters: { services: string[] }[];
+    optionalServices?: string[];
+  }): Promise<BluetoothDeviceLike>;
 }

@@ -2,6 +2,7 @@
 
 import { ArrowDown, ArrowLeft, ArrowRight, Gauge, Sun, Cpu, ToggleRight, BrainCircuit, Wifi } from "lucide-react";
 import { useSolar } from "@/components/dashboard/SolarProvider";
+import BluetoothConnect from "@/components/dashboard/BluetoothConnect";
 
 export default function HardwarePage() {
   const { lang } = useSolar();
@@ -25,6 +26,8 @@ export default function HardwarePage() {
   return <>
     <div className="page-heading"><div><h1>{ar ? "الأجهزة والمكونات الفيزيائية" : "Physical Devices & Components"}</h1><p>{ar ? "استعراض الأجهزة والمستشعرات المادية ومسار ربطها مع محرك الذكاء الاصطناعي." : "Physical devices and sensors, and how they connect to the AI engine."}</p></div><span className="badge">{ar ? "مخطط" : "Planned"}</span></div>
     <p className="notice">{ar ? "الوضع الحالي: محاكاة برمجية. لا توجد حساسات أو ESP32 أو أحمال فعلية متصلة." : "Current mode: software simulation. No sensors, ESP32 or physical loads are connected."}</p>
+
+    <BluetoothConnect />
 
     <section className="hw-hub-panel">
       <h2>{ar ? "مسار التكامل" : "Integration path"}</h2>
