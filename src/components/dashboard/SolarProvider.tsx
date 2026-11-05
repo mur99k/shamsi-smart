@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { calculateEnergy } from "@/lib/energy/calculations";
 import { fallbackDecide } from "@/lib/ai/fallback";
 import { buildDecisionRequest, DEFAULT_SIM_STATE, SCENARIOS, type SimState } from "@/lib/energy/scenarios";
+import { liveDecision, type LiveReading } from "@/lib/energy/live";
 import type { DecisionResponse, RecommendedAction } from "@/types/energy";
 import type { Lang } from "./lang";
 
@@ -21,6 +22,26 @@ export interface Message {
 /** Nordic UART Service — the de-facto BLE serial profile used by our ESP32. */
 const BLE_UART_SERVICE = "6e400001-b5a3-f393-e0a9-e50e24dcca9e";
 const BLE_UART_TX = "6e400003-b5a3-f393-e0a9-e50e24dcca9e";
+/** Device id used by the cloud command channel. */
+const CLOUD_DEVICE_ID = "solarwise-esp32-01";
+/** A reading older than this is stale and must not be shown as live. */
+const LIVE_TTL_MS = 15000;
+
+export type DeviceReading = LiveReading;
+
+export type DeviceSource = "usb" | "ble" | "cloud";
+
+export interface HistoryPoint { t: number; solarW: number; loadW: number; batteryW: number }
+
+export interface DecisionEntry {
+  at: number;
+  action: RecommendedAction;
+  reason: string;
+  solarW: number;
+  loadW: number;
+  batteryPct: number | null;
+  source: DeviceSource | "simulation";
+}
 
 function useSolarState() {
   const [lang, setLang] = useState<Lang>("ar");
@@ -36,12 +57,19 @@ function useSolarState() {
   const [serialStatus, setSerialStatus] = useState<"unsupported" | "disconnected" | "connecting" | "connected">("disconnected");
   const [bleStatus, setBleStatus] = useState<"unsupported" | "disconnected" | "connecting" | "connected">("disconnected");
   const [bleReading, setBleReading] = useState<{ solarW: number; consumptionW: number; lux: number | null; tempC: number | null; relay: string | null } | null>(null);
+  const [deviceReading, setDeviceReading] = useState<DeviceReading | null>(null);
+  const [deviceAt, setDeviceAt] = useState(0);
+  const [deviceSource, setDeviceSource] = useState<DeviceSource | null>(null);
+  const [history, setHistory] = useState<HistoryPoint[]>([]);
+  const [decisionLog, setDecisionLog] = useState<DecisionEntry[]>([]);
+  const [relayState, setRelayState] = useState<"on" | "off" | "unknown">("unknown");
   const [live, setLive] = useState<{ solarW: number; consumptionW: number; batteryPct: number | null; ageMs: number } | null>(null);
   const revision = useRef(0);
   const decisionRequest = useRef<AbortController | null>(null);
   const chatRequest = useRef<AbortController | null>(null);
   const serialReader = useRef<ReadableStreamDefaultReader<string> | null>(null);
   const serialAbort = useRef<AbortController | null>(null);
+  const serialPort = useRef<SerialPortLike | null>(null);
   const bleDevice = useRef<BluetoothDeviceLike | null>(null);
   const bleHandler = useRef<{ tx: BluetoothCharacteristicLike; onValue: (event: Event) => void } | null>(null);
   const bleBuffer = useRef("");
@@ -69,6 +97,20 @@ function useSolarState() {
         const l = data?.latest;
         if (l && typeof data?.ageMs === "number") {
           setLive({ solarW: l.solarProductionW, consumptionW: l.consumptionW, batteryPct: l.batteryLevelPercent ?? null, ageMs: data.ageMs });
+          if (data.ageMs < LIVE_TTL_MS) {
+            ingestReading({
+              solarW: l.solarProductionW,
+              loadW: l.consumptionW,
+              batteryW: null,
+              batteryV: null,
+              batteryA: null,
+              batteryPct: typeof l.batteryLevelPercent === "number" ? l.batteryLevelPercent : null,
+              lux: null,
+              tempC: null,
+              humidity: null,
+              relay: null,
+            }, "cloud");
+          }
         } else if (alive) {
           setLive(null);
         }
@@ -82,6 +124,66 @@ function useSolarState() {
   const calc = calculateEnergy(sim.solarProductionW, sim.consumptionW);
   const preview = fallbackDecide(buildDecisionRequest(sim));
   const decision = result?.decision ?? { ...preview, confidence: null };
+
+  /** Every transport funnels here: one reading shape, one history, one log. */
+  function ingestReading(reading: DeviceReading, source: DeviceSource) {
+    setDeviceReading(reading);
+    setDeviceAt(Date.now());
+    setDeviceSource(source);
+    if (reading.relay) setRelayState(reading.relay);
+    setHistory(prev => [...prev, {
+      t: Date.now(),
+      solarW: reading.solarW,
+      loadW: reading.loadW,
+      batteryW: reading.batteryW ?? 0,
+    }].slice(-60));
+  }
+
+  /** Append one entry per live-decision change (not per sample). */
+  const lastLoggedAction = useRef<string | null>(null);
+  useEffect(() => {
+    if (!deviceReading || !deviceSource) return;
+    const d = liveDecision(deviceReading, lang === "ar");
+    if (lastLoggedAction.current === d.action) return;
+    lastLoggedAction.current = d.action;
+    setDecisionLog(prev => [{
+      at: Date.now(),
+      action: d.action,
+      reason: d.reason,
+      solarW: deviceReading.solarW,
+      loadW: deviceReading.loadW,
+      batteryPct: deviceReading.batteryPct,
+      source: deviceSource,
+    }, ...prev].slice(0, 25));
+  }, [deviceReading, deviceSource, lang]);
+
+  /** Relay command routed to whichever transport is live. */
+  async function setRelayCommand(state: "on" | "off") {
+    if (bleStatus === "connected") {
+      const ok = await sendBluetoothCommand("loads", state);
+      if (ok) setRelayState(state);
+      return ok;
+    }
+    if (serialStatus === "connected" && serialPort.current?.writable) {
+      try {
+        const writer = serialPort.current.writable.getWriter();
+        await writer.write(new TextEncoder().encode(JSON.stringify({ relay: "loads", state }) + "\n"));
+        writer.releaseLock();
+        setRelayState(state);
+        return true;
+      } catch { return false; }
+    }
+    try {
+      const res = await fetch("/api/device/commands", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ deviceId: CLOUD_DEVICE_ID, relay: "loads", state, reason: "dashboard" }),
+      });
+      if (!res.ok) return false;
+      setRelayState(state);
+      return true;
+    } catch { return false; }
+  }
 
   function patch(change: Partial<SimState>, scenario = "") {
     // Invalidate synchronously: a response already in flight cannot commit an old snapshot.
@@ -107,6 +209,7 @@ function useSolarState() {
     try {
       const port = await serial.requestPort();
       await port.open({ baudRate: 115200 });
+      serialPort.current = port;
       const decoder = new TextDecoderStream();
       serialAbort.current = new AbortController();
       if (!port.readable) throw new Error("Serial port is not readable");
@@ -124,7 +227,11 @@ function useSolarState() {
         buffer = lines.pop() ?? "";
         for (const line of lines) {
           try {
-            const reading = JSON.parse(line) as { solarProductionW?: number; consumptionW?: number; batteryLevelPercent?: number };
+            const reading = JSON.parse(line) as {
+              solarProductionW?: number; consumptionW?: number; batteryLevelPercent?: number;
+              batteryPowerW?: number; batteryVoltageV?: number; batteryCurrentA?: number;
+              lightLux?: number; temperatureC?: number; humidityPct?: number; relay?: "on" | "off";
+            };
             const change: Partial<SimState> = {};
             if (Number.isFinite(reading.solarProductionW)) change.solarProductionW = Math.max(0, Math.round(reading.solarProductionW!));
             if (Number.isFinite(reading.consumptionW)) change.consumptionW = Math.max(0, Math.round(reading.consumptionW!));
@@ -132,6 +239,20 @@ function useSolarState() {
             if (Object.keys(change).length) {
               setSim(previous => ({ ...previous, ...change }));
               setResult(null);
+            }
+            if (Number.isFinite(reading.solarProductionW) || Number.isFinite(reading.consumptionW)) {
+              ingestReading({
+                solarW: Number.isFinite(reading.solarProductionW) ? reading.solarProductionW! : 0,
+                loadW: Number.isFinite(reading.consumptionW) ? reading.consumptionW! : 0,
+                batteryW: Number.isFinite(reading.batteryPowerW) ? reading.batteryPowerW! : null,
+                batteryV: Number.isFinite(reading.batteryVoltageV) ? reading.batteryVoltageV! : null,
+                batteryA: Number.isFinite(reading.batteryCurrentA) ? reading.batteryCurrentA! : null,
+                batteryPct: Number.isFinite(reading.batteryLevelPercent) ? reading.batteryLevelPercent! : null,
+                lux: Number.isFinite(reading.lightLux) ? reading.lightLux! : null,
+                tempC: Number.isFinite(reading.temperatureC) ? reading.temperatureC! : null,
+                humidity: Number.isFinite(reading.humidityPct) ? reading.humidityPct! : null,
+                relay: reading.relay === "on" || reading.relay === "off" ? reading.relay : null,
+              }, "usb");
             }
           } catch { /* Ignore incomplete/non-JSON serial lines. */ }
         }
@@ -151,6 +272,7 @@ function useSolarState() {
     serialAbort.current?.abort();
     serialReader.current?.cancel().catch(() => undefined);
     serialReader.current = null;
+    serialPort.current = null;
     setSerialStatus("disconnected");
     setDataMode("simulation");
   }
@@ -202,6 +324,18 @@ function useSolarState() {
               tempC: Number.isFinite(reading.temperatureC) ? reading.temperatureC! : null,
               relay: typeof reading.relay === "string" ? reading.relay : null,
             });
+            ingestReading({
+              solarW: Number.isFinite(reading.solarProductionW) ? reading.solarProductionW! : 0,
+              loadW: Number.isFinite(reading.consumptionW) ? reading.consumptionW! : 0,
+              batteryW: Number.isFinite((reading as { batteryPowerW?: number }).batteryPowerW) ? (reading as { batteryPowerW?: number }).batteryPowerW! : null,
+              batteryV: null,
+              batteryA: null,
+              batteryPct: null,
+              lux: Number.isFinite(reading.lightLux) ? reading.lightLux! : null,
+              tempC: Number.isFinite(reading.temperatureC) ? reading.temperatureC! : null,
+              humidity: null,
+              relay: reading.relay === "on" || reading.relay === "off" ? reading.relay : null,
+            }, "ble");
           } catch { /* ignore partial / non-JSON BLE chunks */ }
         }
       };
@@ -373,7 +507,8 @@ function useSolarState() {
   return { lang, setLang, sim, calc, scenarioId, patch, applyScenario, result, decision, loading, analysisError, analyze,
     messages, draft, setDraft, chatLoading, send, clearChat: () => { if (!chatRequest.current) setMessages([]); },
     dataMode, serialStatus, connectSerial, disconnectSerial, live,
-    bleStatus, bleReading, connectBluetooth, disconnectBluetooth, sendBluetoothCommand };
+    bleStatus, bleReading, connectBluetooth, disconnectBluetooth, sendBluetoothCommand,
+    deviceReading, deviceAt, deviceSource, history, decisionLog, relayState, setRelayCommand };
 }
 
 const SolarContext = createContext<ReturnType<typeof useSolarState> | null>(null);
@@ -389,6 +524,7 @@ export function useSolar() {
 
 interface SerialPortLike {
   readable?: ReadableStream<Uint8Array>;
+  writable?: WritableStream<Uint8Array>;
   open(options: { baudRate: number }): Promise<void>;
   close(): Promise<void>;
 }

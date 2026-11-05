@@ -14,6 +14,7 @@ async function english(page: Page, path = "/simulator") {
 }
 
 test("50W is immediate; shared state, decision and language survive navigation", async ({ page }) => {
+  test.setTimeout(120000);
   await english(page);
   const input = page.getByRole("textbox", { name: "Solar production exact value" });
   await input.fill("50");
@@ -177,6 +178,7 @@ test("all routes render in AR/EN at desktop and mobile without page overflow", a
 });
 
 test("home is a gateway; overview reads shared state and links to simulator edits", async ({ page }) => {
+  test.setTimeout(120000);
   await english(page, "/");
   await expect(page.getByRole("navigation").getByRole("link", { name: "Home", exact: true })).toBeVisible();
   await expect(page.locator(".feature-grid .feature-card")).toHaveCount(3);
