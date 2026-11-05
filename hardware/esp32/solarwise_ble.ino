@@ -1,33 +1,3 @@
-/*
- * SolarWise — ESP32 BLE telemetry (Web Bluetooth ready)
- * =====================================================
- * Exposes a BLE UART (Nordic UART Service) so a browser can read the
- * sensors directly over Bluetooth — no WiFi, no router, no cable.
- *
- * HOW IT WORKS
- *   ESP32 (BLE peripheral) --notify--> Browser (Web Bluetooth) --> Dashboard
- *   Every 2 s the ESP32 notifies ONE JSON line (newline-terminated) with the
- *   same fields the web app already understands:
- *     {"solarProductionW":1.5,"consumptionW":0.3,"batteryLevelPercent":null}
- *
- *   The browser can also WRITE to the RX characteristic to switch the relay:
- *     {"relay":"loads","state":"on"}  /  {"relay":"loads","state":"off"}
- *
- * LIBRARIES (Arduino IDE > Manage Libraries)
- *   - Adafruit INA219
- *   - BH1750
- *   - DHT sensor library
- *   - ArduinoJson
- *   (BLE libraries ship with the ESP32 core — nothing to install.)
- *
- * WIRING (your build)
- *   I2C SDA=21 SCL=22 · solar=0x41 · battery=0x40 · load=0x44 · BH1750=0x23
- *   DHT11=GPIO15 · Relay=GPIO19 (ACTIVE-HIGH: HIGH = ON)
- *   ⚠️ INA219 sits IN SERIES on the positive lead (VIN+/VIN-), max 26V/3.2A.
- *
- * BROWSER SUPPORT
- *   Android Chrome ✅ · Desktop Chrome / Edge ✅ · iPhone Safari ❌ (no Web Bluetooth)
- */
 
 #include <Wire.h>
 #include <Adafruit_INA219.h>
@@ -114,14 +84,23 @@ float readPower_mW(Adafruit_INA219& s, bool ready) {
   return s.getBusVoltage_V() * abs(s.getCurrent_mA());   // V * mA = mW
 }
 
+/** Battery channel keeps its SIGN: + charging, − discharging.
+ *  The field-study protocol (17 - دراسة الأثر) needs the direction. */
+float readSignedPower_mW(Adafruit_INA219& s, bool ready) {
+  if (!ready) return 0;
+  return s.getBusVoltage_V() * s.getCurrent_mA();
+}
+
 void sendReading() {
   const float solar_mW = readPower_mW(solarINA, solarReady);
   const float load_mW  = readPower_mW(loadINA, loadReady);
+  const float batt_mW  = readSignedPower_mW(batteryINA, batteryReady);
 
   StaticJsonDocument<256> doc;
   doc["solarProductionW"] = serialized(String(solar_mW / 1000.0f, 2));
   doc["consumptionW"]     = serialized(String(load_mW / 1000.0f, 2));
   doc["batteryLevelPercent"] = nullptr;   // no BMS -> honest null
+  doc["batteryPowerW"] = serialized(String(batt_mW / 1000.0f, 2));  // + charge / − discharge
   doc["lightLux"]    = roundf(lightSensor.readLightLevel());
   doc["temperatureC"] = serialized(String(dht.readTemperature(), 1));
   doc["relay"] = relayState ? "on" : "off";

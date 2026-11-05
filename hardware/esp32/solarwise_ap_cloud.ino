@@ -100,7 +100,7 @@ void handleRoot() {
 
   html += "<div class='card'><h3>البطارية (Battery)</h3>";
   html += "<p class='val'>الجهد: " + String(batteryV, 2) + " V</p>";
-  html += "<p class='val'>التيار: " + String(batteryI, 1) + " mA</p>";
+  html += "<p class='val'>التيار: " + String(batteryI, 1) + " mA " + (batteryI >= 0 ? "(شحن)" : "(تفريغ)") + "</p>";
   html += "<p class='val'>القدرة: " + String(batteryP, 1) + " mW</p></div>";
 
   html += "<div class='card'><h3>التحكم بالحمل (Relay)</h3>";
@@ -157,7 +157,9 @@ void sendTelemetry() {
   j += "\"solarProductionW\":" + num(solarW, 2) + ",";
   j += "\"consumptionW\":" + num(loadW, 2) + ",";
   // Battery % needs a BMS or a calibrated voltage curve -> send null (honest).
-  j += "\"batteryLevelPercent\":null";
+  j += "\"batteryLevelPercent\":null,";
+  // Signed battery power: + charging, − discharging (the study needs the sign).
+  j += "\"batteryPowerW\":" + num(batteryP / 1000.0f, 2);
   j += "}}";
 
   Serial.println(j);   // also visible over USB / Web Serial
@@ -221,8 +223,10 @@ void readSensors() {
   }
   if (batteryINAReady) {
     batteryV = batteryINA.getBusVoltage_V();
-    batteryI = abs(batteryINA.getCurrent_mA());
-    batteryP = batteryV * batteryI;        // mW
+    // Keep the SIGN: positive = charging, negative = discharging.
+    // The field-study protocol needs the direction to derive import/export.
+    batteryI = batteryINA.getCurrent_mA();
+    batteryP = batteryV * batteryI;        // signed mW
   }
 }
 

@@ -160,6 +160,8 @@ void sendTelemetry() {
   j += "\"batteryLevelPercent\":null,";   // needs a BMS / voltage curve
   j += "\"batteryVoltageV\":"    + (isfinite(battV) ? String(battV, 2) : String("null")) + ",";
   j += "\"batteryCurrentA\":"    + (isfinite(battA) ? String(battA, 2) : String("null")) + ",";
+  // Signed battery power: positive = charging, negative = discharging.
+  j += "\"batteryPowerW\":"      + (isfinite(battA) && isfinite(battV) ? String(battV * battA, 2) : String("null")) + ",";
   j += "\"lightLux\":"           + (isfinite(lux) ? String(lux, 0) : String("null")) + ",";
   j += "\"temperatureC\":"       + (!isnan(tempC) ? String(tempC, 1) : String("null")) + ",";
   j += "\"humidityPct\":"        + (!isnan(hum) ? String(hum, 0) : String("null"));
