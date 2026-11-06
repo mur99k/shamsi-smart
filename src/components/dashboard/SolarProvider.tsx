@@ -43,6 +43,23 @@ export interface DecisionEntry {
   source: DeviceSource | "simulation";
 }
 
+/** Session accumulators for the field-study KPIs (measured, never estimated). */
+export interface StudyTotals {
+  startedAt: number;
+  seconds: number;
+  solarWh: number;
+  loadWh: number;
+  batteryWh: number;   // signed: + charged, − discharged
+  importWh: number;
+  exportWh: number;
+  peakImportWh: number; // 17:00–22:00 local
+}
+
+const EMPTY_STUDY: StudyTotals = {
+  startedAt: 0, seconds: 0, solarWh: 0, loadWh: 0, batteryWh: 0,
+  importWh: 0, exportWh: 0, peakImportWh: 0,
+};
+
 function useSolarState() {
   const [lang, setLang] = useState<Lang>("ar");
   const [sim, setSim] = useState<SimState>({ ...DEFAULT_SIM_STATE });
@@ -63,6 +80,7 @@ function useSolarState() {
   const [history, setHistory] = useState<HistoryPoint[]>([]);
   const [decisionLog, setDecisionLog] = useState<DecisionEntry[]>([]);
   const [relayState, setRelayState] = useState<"on" | "off" | "unknown">("unknown");
+  const [studyTotals, setStudyTotals] = useState<StudyTotals>(EMPTY_STUDY);
   const [live, setLive] = useState<{ solarW: number; consumptionW: number; batteryPct: number | null; ageMs: number } | null>(null);
   const revision = useRef(0);
   const decisionRequest = useRef<AbortController | null>(null);
@@ -73,6 +91,8 @@ function useSolarState() {
   const bleDevice = useRef<BluetoothDeviceLike | null>(null);
   const bleHandler = useRef<{ tx: BluetoothCharacteristicLike; onValue: (event: Event) => void } | null>(null);
   const bleBuffer = useRef("");
+  const studyRef = useRef<StudyTotals>(EMPTY_STUDY);
+  const lastSampleAt = useRef(0);
 
   useEffect(() => {
     document.documentElement.lang = lang;
@@ -127,6 +147,32 @@ function useSolarState() {
 
   /** Every transport funnels here: one reading shape, one history, one log. */
   function ingestReading(reading: DeviceReading, source: DeviceSource) {
+    const nowMs = Date.now();
+    const previous = lastSampleAt.current;
+    const dt = previous ? Math.min(60, Math.max(0, (nowMs - previous) / 1000)) : 0;
+    lastSampleAt.current = nowMs;
+
+    if (dt > 0) {
+      const t = studyRef.current;
+      const net = reading.solarW - reading.loadW;
+      const imported = Math.max(0, -net);
+      const exported = Math.max(0, net - Math.max(0, reading.batteryW ?? 0));
+      const hour = new Date(nowMs).getHours();
+      const inPeak = hour >= 17 && hour < 22;
+      const nextTotals: StudyTotals = {
+        startedAt: t.startedAt || nowMs,
+        seconds: t.seconds + dt,
+        solarWh: t.solarWh + (reading.solarW * dt) / 3600,
+        loadWh: t.loadWh + (reading.loadW * dt) / 3600,
+        batteryWh: t.batteryWh + ((reading.batteryW ?? 0) * dt) / 3600,
+        importWh: t.importWh + (imported * dt) / 3600,
+        exportWh: t.exportWh + (exported * dt) / 3600,
+        peakImportWh: t.peakImportWh + (inPeak ? (imported * dt) / 3600 : 0),
+      };
+      studyRef.current = nextTotals;
+      setStudyTotals(nextTotals);
+    }
+
     setDeviceReading(reading);
     setDeviceAt(Date.now());
     setDeviceSource(source);
@@ -156,6 +202,16 @@ function useSolarState() {
       source: deviceSource,
     }, ...prev].slice(0, 25));
   }, [deviceReading, deviceSource, lang]);
+
+  /** Reset the session accumulators (useful before each demo run). */
+  function resetStudy() {
+    studyRef.current = { ...EMPTY_STUDY };
+    lastSampleAt.current = 0;
+    setStudyTotals({ ...EMPTY_STUDY });
+    setHistory([]);
+    setDecisionLog([]);
+    lastLoggedAction.current = null;
+  }
 
   /** Relay command routed to whichever transport is live. */
   async function setRelayCommand(state: "on" | "off") {
@@ -508,7 +564,8 @@ function useSolarState() {
     messages, draft, setDraft, chatLoading, send, clearChat: () => { if (!chatRequest.current) setMessages([]); },
     dataMode, serialStatus, connectSerial, disconnectSerial, live,
     bleStatus, bleReading, connectBluetooth, disconnectBluetooth, sendBluetoothCommand,
-    deviceReading, deviceAt, deviceSource, history, decisionLog, relayState, setRelayCommand };
+    deviceReading, deviceAt, deviceSource, history, decisionLog, relayState, setRelayCommand,
+    studyTotals, resetStudy };
 }
 
 const SolarContext = createContext<ReturnType<typeof useSolarState> | null>(null);

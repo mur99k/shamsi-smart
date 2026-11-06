@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Activity, BatteryCharging, BatteryFull, BatteryLow, Cable, Bluetooth, Cloud, Gauge, History, Plug, PlugZap, RefreshCw, Sun, TriangleAlert, Waves } from "lucide-react";
+import { Activity, BatteryCharging, BatteryFull, BatteryLow, Cable, Bluetooth, Cloud, Gauge, History, Plug, PlugZap, RefreshCw, RotateCcw, Sun, TriangleAlert, Waves } from "lucide-react";
 import { ACTION_META, type RecommendedAction } from "@/types/energy";
 import { batteryState, liveDecision } from "@/lib/energy/live";
 import { useSolar } from "./SolarProvider";
@@ -19,6 +19,7 @@ function fmtTime(at: number, ar: boolean) {
 export default function LiveDashboard() {
   const {
     lang, deviceReading, deviceAt, deviceSource, history, decisionLog, relayState, setRelayCommand,
+    studyTotals, resetStudy,
     serialStatus, connectSerial, disconnectSerial, bleStatus, connectBluetooth, disconnectBluetooth,
   } = useSolar();
   const ar = lang === "ar";
@@ -97,6 +98,16 @@ export default function LiveDashboard() {
   const pct = (v: number) => Math.round((v / solar) * 100);
 
   const maxPoint = Math.max(1, ...history.map(p => Math.max(p.solarW, p.loadW)));
+  const kwh = (wh: number) => wh >= 1000 ? `${(wh / 1000).toFixed(2)} kWh` : `${Math.round(wh)} Wh`;
+  const selfConsumption = studyTotals.solarWh > 0
+    ? Math.round(((studyTotals.solarWh - studyTotals.exportWh) / studyTotals.solarWh) * 100)
+    : null;
+  const coverage = studyTotals.loadWh > 0
+    ? Math.min(100, Math.round((studyTotals.solarWh / studyTotals.loadWh) * 100))
+    : null;
+  const sessionLabel = studyTotals.seconds >= 60
+    ? `${Math.round(studyTotals.seconds / 60)} ${ar ? "د" : "min"}`
+    : `${Math.round(studyTotals.seconds)} ${ar ? "ث" : "s"}`;
   const line = (field: "solarW" | "loadW") =>
     history.map((p, i) => `${i === 0 ? "M" : "L"} ${(i / Math.max(1, history.length - 1)) * 100} ${38 - (p[field] / maxPoint) * 34}`).join(" ");
 
@@ -195,6 +206,27 @@ export default function LiveDashboard() {
             </div>
           </>
         )}
+      </article>
+
+      {/* Field-study metrics */}
+      <article className="live-card study">
+        <h3><History size={17} />{ar ? "مؤشرات الدراسة الميدانية" : "Field-study metrics"}</h3>
+        <div className="live-grid four">
+          <div className="live-tile"><span>{ar ? "مدة الجلسة" : "Session"}</span><strong dir="ltr">{sessionLabel}</strong></div>
+          <div className="live-tile"><span>{ar ? "طاقة شمسية" : "Solar energy"}</span><strong dir="ltr">{kwh(studyTotals.solarWh)}</strong></div>
+          <div className="live-tile"><span>{ar ? "استهلاك" : "Load energy"}</span><strong dir="ltr">{kwh(studyTotals.loadWh)}</strong></div>
+          <div className="live-tile"><span>{ar ? "إلى البطارية" : "To battery"}</span><strong dir="ltr">{kwh(studyTotals.batteryWh)}</strong></div>
+          <div className="live-tile"><span>{ar ? "الاستهلاك الذاتي" : "Self-consumption"}</span><strong dir="ltr">{selfConsumption !== null ? `${selfConsumption}%` : "—"}</strong></div>
+          <div className="live-tile"><span>{ar ? "تغطية الاستهلاك" : "Coverage"}</span><strong dir="ltr">{coverage !== null ? `${coverage}%` : "—"}</strong></div>
+          <div className="live-tile"><span>{ar ? "استيراد الذروة" : "Peak-hour import"}</span><strong dir="ltr">{kwh(studyTotals.peakImportWh)}</strong></div>
+          <div className="live-tile"><span>{ar ? "إجمالي الاستيراد" : "Total import"}</span><strong dir="ltr">{kwh(studyTotals.importWh)}</strong></div>
+        </div>
+        <p className="muted small">
+          {ar
+            ? "تكامل زمني من القراءات الفعلية (Wh) — لا تقديرات. الجلسة الحالية فقط، والدراسة الميدانية تحتاج أسابيع. الذروة محسوبة بين 17:00 و22:00."
+            : "Time-integrated from real readings (Wh) — no estimates. Current session only; the field study needs weeks. Peak window is 17:00–22:00."}
+        </p>
+        <button className="button" onClick={resetStudy}><RotateCcw size={15} />{ar ? "تصفير الجلسة" : "Reset session"}</button>
       </article>
 
       {/* Relay */}
