@@ -789,7 +789,7 @@ input[type="range"] { accent-color: #46d39a; }
 .live-pill { font-size: 12px; font-weight: 700; border-radius: 99px; padding: 5px 12px; background: #eef1f4; color: #64748b; white-space: nowrap; }
 .live-pill.on { background: #d1fae5; color: #047857; }
 .live-sub { font-size: 12px; color: var(--muted); margin: 6px 0 14px; }
-.live-grid { display: grid; gap: 10px; margin-bottom: 12px; }
+.live-grid { display: grid; gap: 10px; margin-bottom: 12px; align-items: start; }
 .live-grid.four { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
 .live-grid.two { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
 .live-tile { border-radius: 14px; padding: 12px 14px; background: #fff; border: 1px solid var(--border); box-shadow: 0 4px 14px rgba(23, 61, 51, 0.05); min-width: 0; }
@@ -827,6 +827,7 @@ input[type="range"] { accent-color: #46d39a; }
 .dist .d3 { background: #f59e0b; }
 .spark { width: 100%; height: 90px; }
 .spark-base { stroke: #e2e8f0; stroke-width: 1; }
+.spark-fill { fill: rgba(4, 120, 87, 0.12); stroke: none; }
 .spark-solar { fill: none; stroke: #047857; stroke-width: 2; stroke-linejoin: round; }
 .spark-load { fill: none; stroke: #f59e0b; stroke-width: 2; stroke-linejoin: round; }
 .spark-legend { display: flex; flex-wrap: wrap; gap: 12px; font-size: 11.5px; color: var(--muted); }
@@ -843,7 +844,19 @@ input[type="range"] { accent-color: #46d39a; }
 .live-empty p { max-width: 52ch; font-size: 13px; }
 .live-empty > svg { color: #047857; }
 .live-stale { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: #b45309; }
-@media (max-width: 600px) { .live-kv { grid-template-columns: 1fr; } .live-tile strong { font-size: 19px; } }
+@media (max-width: 600px) {
+  .live-grid.four { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .live-kv { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .live-tile { padding: 10px 11px; }
+  .live-tile strong { font-size: 18px; }
+  .live-card.study .live-tile strong { font-size: 16px; }
+  .relay-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .relay-row .relay-state { grid-column: 1 / -1; justify-self: start; }
+  .relay-row .button { flex: 1 1 auto; justify-content: center; }
+  .live-card table { min-width: 420px; }
+  .live-card table th, .live-card table td { white-space: nowrap; }
+  .spark { height: 74px; }
+}
 .hw-hub-panel > h2 { font-size: 16px; margin-bottom: 16px; }
 .hw-stepper { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr); gap: 8px; margin: 0; padding: 0; list-style: none; }
 .hw-stage { position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; border-radius: 16px; padding: 16px 10px; background: rgba(255, 255, 255, 0.9); border: 1px solid var(--border); box-shadow: 0 10px 24px rgba(28, 76, 56, 0.07); }

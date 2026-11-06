@@ -110,6 +110,7 @@ export default function LiveDashboard() {
     : `${Math.round(studyTotals.seconds)} ${ar ? "ث" : "s"}`;
   const line = (field: "solarW" | "loadW") =>
     history.map((p, i) => `${i === 0 ? "M" : "L"} ${(i / Math.max(1, history.length - 1)) * 100} ${38 - (p[field] / maxPoint) * 34}`).join(" ");
+  const solarArea = history.length ? `${line("solarW")} L 100 38 L 0 38 Z` : "";
 
   return (
     <section className="live-shell">
@@ -146,12 +147,18 @@ export default function LiveDashboard() {
           <h3>{bstate.tone === "ok" ? <BatteryFull size={17} /> : bstate.tone === "bad" ? <BatteryLow size={17} /> : <BatteryCharging size={17} />}{ar ? "تحليل البطارية" : "Battery status"}</h3>
           <dl className="live-kv">
             <div><dt>{ar ? "نسبة الشحن" : "SOC"}</dt><dd dir="ltr">{deviceReading.batteryPct !== null ? `${Math.round(deviceReading.batteryPct)} %` : "—"}</dd></div>
-            {deviceReading.batteryV !== null && <div><dt>{ar ? "الجهد" : "Voltage"}</dt><dd dir="ltr">{deviceReading.batteryV.toFixed(2)} V</dd></div>}
-            {deviceReading.batteryA !== null && <div><dt>{ar ? "التيار" : "Current"}</dt><dd dir="ltr">{deviceReading.batteryA.toFixed(0)} mA</dd></div>}
-            {deviceReading.batteryW !== null && <div><dt>{ar ? "القدرة" : "Power"}</dt><dd dir="ltr">{Math.round(deviceReading.batteryW)} W</dd></div>}
+            <div><dt>{ar ? "الجهد" : "Voltage"}</dt><dd dir="ltr">{deviceReading.batteryV !== null ? `${deviceReading.batteryV.toFixed(2)} V` : "—"}</dd></div>
+            <div><dt>{ar ? "التيار" : "Current"}</dt><dd dir="ltr">{deviceReading.batteryA !== null ? `${deviceReading.batteryA.toFixed(0)} mA` : "—"}</dd></div>
+            <div><dt>{ar ? "القدرة" : "Power"}</dt><dd dir="ltr">{deviceReading.batteryW !== null ? `${Math.round(deviceReading.batteryW)} W` : "—"}</dd></div>
           </dl>
           <span className={`batt-tone ${bstate.tone}`}>{bstate.label}</span>
-          {deviceReading.batteryPct === null && <p className="muted small">{ar ? "نسبة الشحن تحتاج BMS — لا نخترع رقمًا." : "SOC needs a BMS — we do not invent a number."}</p>}
+          {(deviceReading.batteryV === null || deviceReading.batteryPct === null) && (
+            <p className="muted small">
+              {ar
+                ? "الشرطة تعني «غير مقيس»: الجهد والتيار يصلان عبر USB أو البلوتوث فقط، ونسبة الشحن تحتاج BMS. لا نخترع رقمًا."
+                : "A dash means “not measured”: voltage and current arrive over USB or Bluetooth only, and SOC needs a BMS. We never invent a number."}
+            </p>
+          )}
         </article>
 
         {/* Decision */}
@@ -196,13 +203,14 @@ export default function LiveDashboard() {
           <>
             <svg className="spark" viewBox="0 0 100 40" preserveAspectRatio="none" role="img" aria-label={ar ? "منحنى الإنتاج والاستهلاك" : "Production and consumption trend"}>
               <polyline points="0,38 100,38" className="spark-base" />
+              <path d={solarArea} className="spark-fill" />
               <path d={line("solarW")} className="spark-solar" />
               <path d={line("loadW")} className="spark-load" />
             </svg>
             <div className="spark-legend">
-              <span><i className="k1" />{ar ? "إنتاج" : "Production"} · {Math.round(maxPoint)} W</span>
-              <span><i className="k2" />{ar ? "استهلاك" : "Consumption"}</span>
-              <span className="muted">{history.length} {ar ? "عيّنة" : "samples"}</span>
+              <span><i className="k1" />{ar ? "إنتاج" : "Production"} · {Math.round(history[history.length - 1].solarW)} W</span>
+              <span><i className="k2" />{ar ? "استهلاك" : "Consumption"} · {Math.round(history[history.length - 1].loadW)} W</span>
+              <span className="muted">{history.length} {ar ? "عيّنة" : "samples"} · {ar ? "أقصى" : "peak"} {Math.round(maxPoint)} W</span>
             </div>
           </>
         )}
