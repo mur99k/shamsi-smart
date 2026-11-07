@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Activity, BatteryCharging, BatteryFull, BatteryLow, Cable, Bluetooth, Cloud, Gauge, History, Plug, PlugZap, RefreshCw, RotateCcw, Sun, TriangleAlert, Waves } from "lucide-react";
+import { Activity, BatteryCharging, BatteryFull, BatteryLow, Cable, Bluetooth, Cloud, Download, Gauge, History, Plug, PlugZap, RefreshCw, RotateCcw, Sun, TriangleAlert, Waves } from "lucide-react";
 import { ACTION_META, type RecommendedAction } from "@/types/energy";
 import { batteryState, liveDecision } from "@/lib/energy/live";
 import { useSolar } from "./SolarProvider";
@@ -58,6 +58,42 @@ export default function LiveDashboard() {
     setBusy(true);
     await setRelayCommand(state);
     setBusy(false);
+  }
+
+  /** Session export: summary header + every measured sample. Nothing is
+   *  interpolated; a value that was not measured stays empty. */
+  function exportCsv() {
+    const rows: string[] = [];
+    const exportedAt = new Date().toISOString();
+    rows.push("# SolarWise field-study session export");
+    rows.push(`# exported_at,${exportedAt}`);
+    rows.push(`# session_seconds,${Math.round(studyTotals.seconds)}`);
+    rows.push(`# device_source,${deviceSource ?? "unknown"}`);
+    rows.push(`# solar_wh,${studyTotals.solarWh.toFixed(3)}`);
+    rows.push(`# load_wh,${studyTotals.loadWh.toFixed(3)}`);
+    rows.push(`# battery_wh_signed,${studyTotals.batteryWh.toFixed(3)}`);
+    rows.push(`# import_wh,${studyTotals.importWh.toFixed(3)}`);
+    rows.push(`# export_wh,${studyTotals.exportWh.toFixed(3)}`);
+    rows.push(`# peak_import_wh_17_22,${studyTotals.peakImportWh.toFixed(3)}`);
+    const sc = studyTotals.solarWh > 0 ? Math.round(((studyTotals.solarWh - studyTotals.exportWh) / studyTotals.solarWh) * 100) : "";
+    const cov = studyTotals.loadWh > 0 ? Math.min(100, Math.round((studyTotals.solarWh / studyTotals.loadWh) * 100)) : "";
+    rows.push(`# self_consumption_pct,${sc}`);
+    rows.push(`# coverage_pct,${cov}`);
+    rows.push("# note,integrated from measured readings only; current session");
+    rows.push("");
+    rows.push("timestamp_iso,solar_w,load_w,battery_w");
+    for (const p of history) {
+      rows.push(`${new Date(p.t).toISOString()},${p.solarW.toFixed(1)},${p.loadW.toFixed(1)},${p.batteryW !== null ? p.batteryW.toFixed(1) : ""}`);
+    }
+    const blob = new Blob([`\uFEFF${rows.join("\r\n")}`], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `solarwise-session-${exportedAt.slice(0, 19).replace(/[:T]/g, "-")}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
   }
 
   // ── Empty state: no fake numbers ─────────────────────────────────────────
@@ -292,7 +328,12 @@ export default function LiveDashboard() {
             ? "تكامل زمني من القراءات الفعلية (Wh) — لا تقديرات. الجلسة الحالية فقط، والدراسة الميدانية تحتاج أسابيع. الذروة محسوبة بين 17:00 و22:00."
             : "Time-integrated from real readings (Wh) — no estimates. Current session only; the field study needs weeks. Peak window is 17:00–22:00."}
         </p>
-        <button className="button mt-2" onClick={resetStudy}><RotateCcw size={15} />{ar ? "تصفير الجلسة" : "Reset session"}</button>
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          <button className="button" onClick={resetStudy}><RotateCcw size={15} />{ar ? "تصفير الجلسة" : "Reset session"}</button>
+          <button className="button" onClick={exportCsv} disabled={history.length === 0} data-testid="study-csv">
+            <Download size={15} />{ar ? "تصدير CSV" : "Export CSV"}
+          </button>
+        </div>
       </article>
 
       {/* 8 · Relay control (GPIO 19) */}

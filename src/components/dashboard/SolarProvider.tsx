@@ -31,7 +31,7 @@ export type DeviceReading = LiveReading;
 
 export type DeviceSource = "usb" | "ble" | "cloud";
 
-export interface HistoryPoint { t: number; solarW: number; loadW: number; batteryW: number }
+export interface HistoryPoint { t: number; solarW: number; loadW: number; batteryW: number | null }
 
 export interface DecisionEntry {
   at: number;
@@ -181,7 +181,7 @@ function useSolarState() {
       t: Date.now(),
       solarW: reading.solarW,
       loadW: reading.loadW,
-      batteryW: reading.batteryW ?? 0,
+      batteryW: reading.batteryW,
     }].slice(-60));
   }
 
