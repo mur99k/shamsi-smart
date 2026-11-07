@@ -154,7 +154,7 @@ test("all routes render in AR/EN at desktop and mobile without page overflow", a
   for (const width of [1440, 1024, 768, 390]) {
     await page.setViewportSize({ width, height: width === 390 ? 844 : 1000 });
     for (const lang of ["ar", "en"]) {
-      for (const route of ["/", "/dashboard", "/simulator", "/assistant", "/evaluation", "/project", "/hardware"]) {
+      for (const route of ["/", "/dashboard", "/simulator", "/assistant", "/evaluation", "/project", "/hardware", "/report"]) {
         await page.goto(route);
         if (lang === "en") {
           const menuToggle = page.locator(".menu-button");

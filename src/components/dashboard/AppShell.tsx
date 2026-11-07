@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useRef, useState } from "react";
-import { Menu, X, Cable, House, LayoutDashboard, SlidersHorizontal, MessagesSquare, ClipboardCheck, FileText, Cpu, Globe, Siren } from "lucide-react";
+import { Menu, X, Cable, House, LayoutDashboard, SlidersHorizontal, MessagesSquare, ClipboardCheck, FileText, Cpu, Globe, Siren, BookOpen } from "lucide-react";
 import { useSolar } from "./SolarProvider";
 
 const routes = [
@@ -16,6 +16,7 @@ const routes = [
   ["/alerts", "Alerts", "التنبيهات", Siren],
   ["/project", "Project", "المشروع", FileText],
   ["/hardware", "Hardware", "الأجهزة والمكونات", Cpu],
+  ["/report", "Report", "التقرير الفني", BookOpen],
 ] as const;
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
@@ -54,6 +55,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       </div>
     </header>
     <main id="main" className="page-container" tabIndex={-1}>{children}</main>
-    <footer className="site-footer"><span>{ar ? "نموذج محاكاة برمجي. لا توجد أجهزة متصلة." : "Software simulation prototype. No hardware connected."}</span><Link href="/project">{ar ? "عن المشروع" : "About the project"}</Link></footer>
+    <footer className="site-footer"><span>{ar ? "نموذج محاكاة برمجي. لا توجد أجهزة متصلة." : "Software simulation prototype. No hardware connected."}</span><Link href="/report">{ar ? "التقرير الفني" : "Report"}</Link><Link href="/project">{ar ? "عن المشروع" : "About the project"}</Link></footer>
   </>;
 }
