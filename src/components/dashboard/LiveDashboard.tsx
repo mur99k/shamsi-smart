@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Activity, BatteryCharging, BatteryFull, BatteryLow, Cable, Bluetooth, Cloud, Download, Gauge, History, Plug, PlugZap, RefreshCw, RotateCcw, Sun, TriangleAlert, Waves } from "lucide-react";
+import { Activity, BatteryCharging, BatteryFull, BatteryLow, Cable, Bluetooth, Cloud, Download, Gauge, History, Leaf, Plug, PlugZap, RefreshCw, RotateCcw, Sun, TriangleAlert, Waves } from "lucide-react";
 import { ACTION_META, type RecommendedAction } from "@/types/energy";
 import { batteryState, liveDecision } from "@/lib/energy/live";
 import { useSolar } from "./SolarProvider";
@@ -77,8 +77,15 @@ export default function LiveDashboard() {
     rows.push(`# peak_import_wh_17_22,${studyTotals.peakImportWh.toFixed(3)}`);
     const sc = studyTotals.solarWh > 0 ? Math.round(((studyTotals.solarWh - studyTotals.exportWh) / studyTotals.solarWh) * 100) : "";
     const cov = studyTotals.loadWh > 0 ? Math.min(100, Math.round((studyTotals.solarWh / studyTotals.loadWh) * 100)) : "";
+    const avoided = Math.max(0, studyTotals.solarWh - studyTotals.exportWh);
+    const indep = studyTotals.loadWh > 0 ? Math.round(((studyTotals.loadWh - studyTotals.importWh) / studyTotals.loadWh) * 100) : "";
     rows.push(`# self_consumption_pct,${sc}`);
     rows.push(`# coverage_pct,${cov}`);
+    rows.push(`# avoided_wh,${avoided.toFixed(3)}`);
+    rows.push(`# cost_avoided_sar,${((avoided / 1000) * 0.18).toFixed(3)}`);
+    rows.push(`# co2_avoided_kg,${((avoided / 1000) * 0.692).toFixed(3)}`);
+    rows.push(`# independence_pct,${indep}`);
+    rows.push("# assumptions,tariff 0.18 SAR/kWh (SERA first tier); carbon 0.692 kg CO2e/kWh (Ember 2024 grid average)");
     rows.push("# note,integrated from measured readings only; current session");
     rows.push("");
     rows.push("timestamp_iso,solar_w,load_w,battery_w");
@@ -165,6 +172,18 @@ export default function LiveDashboard() {
   const sessionLabel = studyTotals.seconds >= 60
     ? `${Math.round(studyTotals.seconds / 60)} ${ar ? "د" : "min"}`
     : `${Math.round(studyTotals.seconds)} ${ar ? "ث" : "s"}`;
+
+  /* Impact — derived from measured integrals only.
+     Tariff: 18 halalas/kWh, first 6,000 kWh/month (SERA, residential).
+     Carbon: 0.692 kg CO2e/kWh, Ember 2024 grid average (independent estimate). */
+  const TARIFF_SAR_PER_KWH = 0.18;
+  const CO2_KG_PER_KWH = 0.692;
+  const avoidedWh = Math.max(0, studyTotals.solarWh - studyTotals.exportWh);
+  const avoidedSar = (avoidedWh / 1000) * TARIFF_SAR_PER_KWH;
+  const co2Kg = (avoidedWh / 1000) * CO2_KG_PER_KWH;
+  const independence = studyTotals.loadWh > 0
+    ? Math.max(0, Math.min(100, Math.round(((studyTotals.loadWh - studyTotals.importWh) / studyTotals.loadWh) * 100)))
+    : null;
   const line = (field: "solarW" | "loadW") =>
     history.map((p, i) => `${i === 0 ? "M" : "L"} ${(i / Math.max(1, history.length - 1)) * 100} ${38 - (p[field] / maxPoint) * 34}`).join(" ");
   const solarArea = history.length ? `${line("solarW")} L 100 38 L 0 38 Z` : "";
@@ -334,6 +353,44 @@ export default function LiveDashboard() {
             <Download size={15} />{ar ? "تصدير CSV" : "Export CSV"}
           </button>
         </div>
+      </article>
+
+      {/* 7b · Impact — money and carbon avoided, from measured energy only */}
+      <article className={CARD}>
+        <h3 className={H3}><Leaf size={17} className={ICON} />{ar ? "الأثر المالي والبيئي" : "Cost & carbon impact"}</h3>
+        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
+          <div className={TILE}>
+            <span className={TILE_LABEL}>{ar ? "تكلفة متجنبة" : "Cost avoided"}</span>
+            <strong className={TILE_VALUE} dir="ltr">
+              {avoidedSar >= 1
+                ? <>{avoidedSar.toFixed(2)} <span className="text-xs font-bold">{ar ? "ر.س" : "SAR"}</span></>
+                : <>{(avoidedSar * 100).toFixed(2)} <span className="text-xs font-bold">{ar ? "هللة" : "halala"}</span></>}
+            </strong>
+          </div>
+          <div className={TILE}>
+            <span className={TILE_LABEL}>{ar ? "CO₂ متجنب" : "CO₂ avoided"}</span>
+            <strong className={TILE_VALUE} dir="ltr">
+              {co2Kg >= 1
+                ? <>{co2Kg.toFixed(2)} <span className="text-xs font-bold">kg</span></>
+                : <>{(co2Kg * 1000).toFixed(0)} <span className="text-xs font-bold">g</span></>}
+            </strong>
+          </div>
+          <div className={`${TILE} max-sm:col-span-2`}>
+            <span className={TILE_LABEL}>{ar ? "استقلالية الطاقة" : "Energy independence"}</span>
+            <strong className={TILE_VALUE} dir="ltr">{independence !== null ? `${independence}%` : "—"}</strong>
+          </div>
+        </div>
+        <p className={SMALL}>
+          {ar
+            ? `محسوبة من ${kwh(avoidedWh)} طاقة شمسية استُهلكت فعليًا. التعرفة 18 هللة/كWh (السعودية — الشريحة الأولى)، والانبعاث 0.692 kg CO₂/kWh (متوسط الشبكة 2024، Ember). تقدير مرجعي، وليس فاتورة.`
+            : `Computed from ${kwh(avoidedWh)} of solar actually consumed on site. Tariff 18 halalas/kWh (Saudi first tier), carbon 0.692 kg CO₂/kWh (2024 grid average, Ember). Reference estimate, not a bill.`}
+        </p>
+        <p className="mt-1 text-xs text-[color:var(--muted)]">
+          {ar ? "إسقاط لو استمرت القدرة الحالية ساعة:" : "If current power held for an hour:"}{" "}
+          <b className="text-[color:var(--ink)]" dir="ltr">{((selfUsed / 1000) * TARIFF_SAR_PER_KWH).toFixed(2)}</b> {ar ? "ر.س" : "SAR"} ·{" "}
+          <b className="text-[color:var(--ink)]" dir="ltr">{((selfUsed / 1000) * CO2_KG_PER_KWH).toFixed(2)}</b> kg
+          {" "}<span className="opacity-70">{ar ? "(إسقاط لا قياس)" : "(projection, not a measurement)"}</span>
+        </p>
       </article>
 
       {/* 8 · Relay control (GPIO 19) */}
